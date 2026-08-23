@@ -37,3 +37,6 @@ build/
 ### Reports ###
 allure-results
 allure-report
+
+mvnw
+mvnw.cmd
