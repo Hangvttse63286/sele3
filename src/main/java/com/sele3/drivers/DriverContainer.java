@@ -1,5 +1,7 @@
 package com.sele3.drivers;
 
+import org.openqa.selenium.WebDriverException;
+
 import com.sele3.configs.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +49,7 @@ public class DriverContainer {
                 log.info("Quitting driver");
                 driver.getDriver().quit();
             }
-        } catch (Exception e) {
+        } catch (WebDriverException e) {
             throw new RuntimeException("Error occurs when trying to quit driver", e);
         } finally {
             threadDriver.remove();

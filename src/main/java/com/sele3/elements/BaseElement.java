@@ -186,7 +186,7 @@ public class BaseElement {
      * @return {@code true} if selected
      */
     public boolean isSelected() {
-        return getElement().isSelected();
+        return RetryAction.retry(() -> getElement().isSelected());
     }
 
     /**
@@ -195,7 +195,7 @@ public class BaseElement {
      * @return {@code true} if enabled
      */
     public boolean isEnabled() {
-        return getElement().isEnabled();
+        return RetryAction.retry(() -> getElement().isEnabled());
     }
 
     /**
@@ -352,7 +352,12 @@ public class BaseElement {
      * @return {@code true} if the element is visible within the wait timeout, {@code false} otherwise
      */
     public boolean isDisplayed() {
-        return RetryAction.retry(() -> getElement() != null && getElement().isDisplayed());
+        try {
+            return RetryAction.retry(() -> getElement().isDisplayed());
+        } catch (RuntimeException e) {
+            log.debug(e.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -361,6 +366,11 @@ public class BaseElement {
      * @return {@code true} if the element is found within the wait timeout, {@code false} otherwise
      */
     public boolean exists() {
-        return SeleniumWait.waitForExist(this) != null;
+        try {
+            return SeleniumWait.waitForExist(this) != null;
+        } catch (RuntimeException e) {
+            log.debug(e.getMessage());
+            return false;
+        }
     }
 }
