@@ -4,52 +4,48 @@ import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.remote.AbstractDriverOptions;
 
 import com.sele3.configs.Configuration;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class FirefoxDriverFactory implements IDriverFactory {
+public class FirefoxDriverFactory implements IDriverFactory<FirefoxOptions> {
 
     /**
-     * Sets up GeckoDriver via WebDriverManager and creates a {@link FirefoxDriver} instance.
+     * Creates a {@link FirefoxDriver} instance. Selenium Manager resolves and downloads a
+     * matching geckodriver binary automatically.
      *
-     * @param options the driver options, expected to be a {@link FirefoxOptions}
+     * @param options the driver options
      * @return the created {@link FirefoxDriver}
-     * @throws IllegalArgumentException if {@code options} is not a {@link FirefoxOptions}
      */
     @Override
-    public WebDriver createDriver(AbstractDriverOptions<?> options) {
-        if (options instanceof FirefoxOptions firefoxOptions) {
-            WebDriverManager.firefoxdriver().setup();
-            return new FirefoxDriver(firefoxOptions);
-        }
-        throw new IllegalArgumentException("Invalid options for FirefoxDriver");
+    public WebDriver createDriver(FirefoxOptions options) {
+        return new FirefoxDriver(options);
     }
 
     /**
-     * Builds {@link FirefoxOptions} from the given {@link Configuration}, applying headless
-     * and password-manager preferences before merging any extra capabilities.
+     * Builds {@link FirefoxOptions} from the given {@link Configuration}: applies headless mode,
+     * window size, and page load strategy, then merges any extra capabilities. Firefox has no
+     * CLI flag for starting maximized; see {@link DriverRunner#initDriver} for that handling.
      *
      * @param config the test run configuration
      * @return the populated {@link FirefoxOptions}
      */
     @Override
-    public AbstractDriverOptions<?> getOptions(Configuration config) {
+    public FirefoxOptions getOptions(Configuration config) {
         FirefoxOptions options = new FirefoxOptions();
 
         if (config.isHeadless()) {
             options.addArguments("-headless");
         }
-
-        options.addPreference("signon.rememberSignons", false);
-        options.addPreference("extensions.formautofill.addresses.enabled", false);
+        if (config.getWindowSize() != null && !config.getWindowSize().isEmpty()) {
+            String[] size = config.getWindowSize().split(",");
+            options.addArguments("-width", size[0].trim());
+            options.addArguments("-height", size[1].trim());
+        }
 
         options.setPageLoadStrategy(PageLoadStrategy.fromString(config.getPageLoadStrategy()));
-        options.setAcceptInsecureCerts(true);
 
         if (config.getCapabilities() != null) {
             options.merge(config.getCapabilities());

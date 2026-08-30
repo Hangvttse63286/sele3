@@ -35,7 +35,7 @@ public class Driver {
      * @return the initialized {@link WebDriver}
      * @throws RuntimeException if {@link #createDriver()} has not been called yet
      */
-    public synchronized WebDriver getWebDriver() {
+    public WebDriver getWebDriver() {
         if (this.driver == null) {
             throw new RuntimeException("Driver is not initialized");
         }

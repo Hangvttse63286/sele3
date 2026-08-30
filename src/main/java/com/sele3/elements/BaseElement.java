@@ -4,13 +4,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.Select;
 
 import com.sele3.drivers.DriverRunner;
+import com.sele3.waits.RetryAction;
 import com.sele3.waits.SeleniumWait;
 
 import lombok.Data;
@@ -41,23 +40,21 @@ public class BaseElement {
     }
 
     /**
-     * Waits for this element to be visible, then returns it.
+     * Waits for this element to exist in the DOM, then returns it.
      *
      * @return the underlying {@link WebElement}
      */
     public WebElement getElement() {
-        waitForVisible();
-        return waitForExist();
+        return SeleniumWait.waitForExist(this);
     }
 
     /**
-     * Waits for all matching elements to be visible, then returns them.
+     * Waits for at least one matching element to exist in the DOM, then returns them.
      *
      * @return all matching {@link WebElement}s
      */
     public List<WebElement> getElements() {
-        waitForAllVisible();
-        return waitForAllExist();
+        return SeleniumWait.waitForAllExist(this);
     }
 
     /**
@@ -77,7 +74,7 @@ public class BaseElement {
      * @return the attribute's value, or {@code null} if not present
      */
     public String getAttribute(String attribute) {
-        return getElement().getAttribute(attribute);
+        return RetryAction.retry(() -> getElement().getAttribute(attribute));
     }
 
     /**
@@ -86,7 +83,7 @@ public class BaseElement {
      * @return the element's visible text
      */
     public String getText() {
-        return getElement().getText();
+        return RetryAction.retry(() -> getElement().getText());
     }
 
     /**
@@ -114,7 +111,7 @@ public class BaseElement {
      * @return the computed CSS value
      */
     public String getCssValue(String name) {
-        return getElement().getCssValue(name);
+        return RetryAction.retry(() -> getElement().getCssValue(name));
     }
 
     /**
@@ -124,7 +121,7 @@ public class BaseElement {
      * @return the computed CSS value for each matching element, in DOM order
      */
     public List<String> getAllCssValues(String name) {
-        return getElements().stream().map(e -> e.getCssValue(name)).collect(Collectors.toList());
+        return RetryAction.retry(() -> getElements().stream().map(e -> e.getCssValue(name)).collect(Collectors.toList()));
     }
 
     /**
@@ -133,7 +130,7 @@ public class BaseElement {
      * @return the visible text of each matching element, in DOM order
      */
     public List<String> getAllTexts() {
-        return getElements().stream().map(WebElement::getText).collect(Collectors.toList());
+        return RetryAction.retry(() -> getElements().stream().map(WebElement::getText).collect(Collectors.toList()));
     }
 
     /**
@@ -147,32 +144,40 @@ public class BaseElement {
      * Scrolls the element to the center of the viewport and left-clicks it.
      */
     public void click() {
-        scrollToCenter();
-        waitForClickable().click();
+        RetryAction.retry(() -> {
+            scrollToCenter();
+            SeleniumWait.waitForClickable(this).click();
+        });
     }
 
     /**
      * Scrolls the element to the center of the viewport and right-clicks it.
      */
     public void rightClick() {
-        scrollToCenter();
-        new Actions(DriverRunner.getWebDriver()).contextClick(waitForClickable()).perform();
+        RetryAction.retry(() -> {
+            scrollToCenter();
+            new Actions(DriverRunner.getWebDriver()).contextClick(SeleniumWait.waitForClickable(this)).perform();
+        });
     }
 
     /**
      * Scrolls the element to the center of the viewport and double-clicks it.
      */
     public void doubleClick() {
-        scrollToCenter();
-        new Actions(DriverRunner.getWebDriver()).doubleClick(waitForClickable()).perform();
+        RetryAction.retry(() -> {
+            scrollToCenter();
+            new Actions(DriverRunner.getWebDriver()).doubleClick(SeleniumWait.waitForClickable(this)).perform();
+        });
     }
 
     /**
      * Scrolls the element to the center of the viewport and hovers the mouse over it.
      */
     public void hover() {
-        scrollToCenter();
-        new Actions(DriverRunner.getWebDriver()).moveToElement(getElement()).perform();
+        RetryAction.retry(() -> {
+            scrollToCenter();
+            new Actions(DriverRunner.getWebDriver()).moveToElement(SeleniumWait.waitForVisible(this)).perform();
+        });
     }
 
     /**
@@ -225,8 +230,29 @@ public class BaseElement {
      *
      * @param values the character sequences to send
      */
-    public void enterText(CharSequence... values) {
-        getElement().sendKeys(values);
+    public void enter(CharSequence... values) {
+        RetryAction.retry(() -> {
+            SeleniumWait.waitForClickable(this).sendKeys(values);
+        });
+
+    }
+
+    /**
+     * Clears this element's current value.
+     */
+    public void clear() {
+        RetryAction.retry(() -> {
+            SeleniumWait.waitForClickable(this).clear();
+        });
+    }
+
+    /**
+     * Submits the form containing this element.
+     */
+    public void submit() {
+        RetryAction.retry(() -> {
+            SeleniumWait.waitForClickable(this).submit();
+        });
     }
 
     /**
@@ -235,8 +261,10 @@ public class BaseElement {
      * @param values the character sequences to send
      */
     public void clearAndEnterText(CharSequence... values) {
-        getElement().clear();
-        this.enterText(values);
+        RetryAction.retry(() -> {
+            SeleniumWait.waitForClickable(this).clear();
+            this.enter(values);
+        });
     }
 
     /**
@@ -245,8 +273,10 @@ public class BaseElement {
      * @param option the visible text of the option to select
      */
     public void select(String option) {
-        Select select = new Select(getElement());
-        select.selectByVisibleText(option);
+        RetryAction.retry(() -> {
+            Select select = new Select(getElement());
+            select.selectByVisibleText(option);
+        });
     }
 
     /**
@@ -255,8 +285,10 @@ public class BaseElement {
      * @param value the {@code value} attribute of the option to select
      */
     public void selectByValue(String value) {
-        Select select = new Select(getElement());
-        select.selectByValue(value);
+        RetryAction.retry(() -> {
+            Select select = new Select(getElement());
+            select.selectByValue(value);
+        });
     }
 
     /**
@@ -265,8 +297,10 @@ public class BaseElement {
      * @param index the zero-based index of the option to select
      */
     public void selectByIndex(int index) {
-        Select select = new Select(getElement());
-        select.selectByIndex(index);
+        RetryAction.retry(() -> {
+            Select select = new Select(getElement());
+            select.selectByIndex(index);
+        });
     }
 
     /**
@@ -275,8 +309,10 @@ public class BaseElement {
      * @return the selected option's visible text
      */
     public String getSelectedOption() {
-        Select select = new Select(getElement());
-        return select.getFirstSelectedOption().getText();
+        return RetryAction.retry(() -> {
+            Select select = new Select(getElement());
+            return select.getFirstSelectedOption().getText();
+        });
     }
 
     /**
@@ -285,8 +321,10 @@ public class BaseElement {
      * @return the visible text of each option, in DOM order
      */
     public List<String> getAllSelectedOptions() {
-        Select select = new Select(getElement());
-        return select.getOptions().stream().map(WebElement::getText).collect(Collectors.toList());
+        return RetryAction.retry(() -> {
+            Select select = new Select(getElement());
+            return select.getOptions().stream().map(WebElement::getText).collect(Collectors.toList());
+        });
     }
 
     /**
@@ -295,8 +333,10 @@ public class BaseElement {
      * otherwise clickable).
      */
     public void clickViaJS() {
-        scrollToCenter();
-        DriverRunner.executeJS("arguments[0].click();", getElement());
+        RetryAction.retry(() -> {
+            scrollToCenter();
+            DriverRunner.executeJS("arguments[0].click();", getElement());
+        });
     }
 
     /**
@@ -307,242 +347,12 @@ public class BaseElement {
     }
 
     /**
-     * Waits until this element is present in the DOM.
-     *
-     * @return the found {@link WebElement}
-     */
-    public WebElement waitForExist() {
-        return SeleniumWait.waitForExist(getLocator());
-    }
-
-    /**
-     * Waits until at least one matching element is present in the DOM.
-     *
-     * @return all matching {@link WebElement}s
-     */
-    public List<WebElement> waitForAllExist() {
-        return SeleniumWait.waitForAllExist(getLocator());
-    }
-
-    /**
-     * Waits until this element is present and visible.
-     */
-    public void waitForVisible() {
-        SeleniumWait.waitForVisible(getLocator());
-    }
-
-    /**
-     * Waits until all matching elements are present and visible.
-     */
-    public void waitForAllVisible() {
-        SeleniumWait.waitForAllVisible(getLocator());
-    }
-
-    /**
-     * Waits until this element is no longer visible (or no longer present).
-     */
-    public void waitForInvisible() {
-        SeleniumWait.waitForInvisible(getLocator());
-    }
-
-    /**
-     * Waits until this element is enabled.
-     */
-    public void waitForEnabled() {
-        SeleniumWait.waitForEnabled(getElement());
-    }
-
-    /**
-     * Waits until this element is disabled.
-     */
-    public void waitForDisabled() {
-        SeleniumWait.waitForDisabled(getElement());
-    }
-
-    /**
-     * Waits until this element is visible and enabled.
-     *
-     * @return the clickable {@link WebElement}
-     */
-    public WebElement waitForClickable() {
-        return SeleniumWait.waitForClickable(getLocator());
-    }
-
-    /**
-     * Waits until this element's {@code value} attribute equals the given value.
-     *
-     * @param value the expected value
-     */
-    public void waitForValueEquals(String value) {
-        SeleniumWait.waitForValueEquals(getElement(), value);
-    }
-
-    /**
-     * Waits until this element's {@code value} attribute no longer equals the given value.
-     *
-     * @param value the value expected to no longer match
-     */
-    public void waitForValueNotEquals(String value) {
-        SeleniumWait.waitForValueNotEquals(getElement(), value);
-    }
-
-    /**
-     * Waits until this element's {@code value} attribute contains the given text.
-     *
-     * @param value the substring expected to appear in the value
-     */
-    public void waitForValueContains(String value) {
-        SeleniumWait.waitForValueContains(getElement(), value);
-    }
-
-    /**
-     * Waits until this element's visible text equals the given text.
-     *
-     * @param text the expected text
-     */
-    public void waitForTextEquals(String text) {
-        SeleniumWait.waitForTextEquals(getElement(), text);
-    }
-
-    /**
-     * Waits until this element's visible text no longer equals the given text.
-     *
-     * @param text the text expected to no longer match
-     */
-    public void waitForTextNotEquals(String text) {
-        SeleniumWait.waitForTextNotEquals(getElement(), text);
-    }
-
-    /**
-     * Waits until this element contains the given text.
-     *
-     * @param text the substring expected to appear in the element's text
-     */
-    public void waitForTextContains(String text) {
-        SeleniumWait.waitForTextContains(getLocator(), text);
-    }
-
-    /**
-     * Waits until the given attribute on this element equals the given value.
-     *
-     * @param attribute the attribute name
-     * @param value the expected value
-     */
-    public void waitForAttributeEquals(String attribute, String value) {
-        SeleniumWait.waitForAttributeEquals(getElement(), attribute, value);
-    }
-
-    /**
-     * Waits until the given attribute on this element no longer equals the given value.
-     *
-     * @param attribute the attribute name
-     * @param value the value expected to no longer match
-     */
-    public void waitForAttributeNotEquals(String attribute, String value) {
-        SeleniumWait.waitForAttributeNotEquals(getElement(), attribute, value);
-    }
-
-    /**
-     * Waits until the given attribute on this element contains the given value.
-     *
-     * @param attribute the attribute name
-     * @param value the substring expected to appear in the attribute's value
-     */
-    public void waitForAttributeContains(String attribute, String value) {
-        SeleniumWait.waitForAttributeContains(getElement(), attribute, value);
-    }
-
-    /**
-     * Waits until this {@code <select>} element has its {@code <option>} children populated.
-     */
-    public void waitForSelectOptionsLoaded() {
-        SeleniumWait.waitForSelectOptionsLoaded(getLocator());
-    }
-
-    /**
-     * Waits until this element is selected/checked.
-     */
-    public void waitForChecked() {
-        SeleniumWait.waitForChecked(getElement());
-    }
-
-    /**
-     * Waits until this element is deselected/unchecked.
-     */
-    public void waitForUnchecked() {
-        SeleniumWait.waitForUnchecked(getElement());
-    }
-
-    /**
-     * Checks, without throwing, whether the given attribute on this element equals the given value.
-     *
-     * @param attribute the attribute name
-     * @param value the expected value
-     * @return {@code true} if the attribute equals the value within the wait timeout, {@code false} otherwise
-     */
-    public boolean attributeEquals(String attribute, String value) {
-        try {
-            waitForAttributeEquals(attribute, value);
-            return true;
-        } catch (NoSuchElementException | TimeoutException e) {
-            log.debug(e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Checks, without throwing, whether the given attribute on this element contains the given value.
-     *
-     * @param attribute the attribute name
-     * @param value the substring expected to appear in the attribute's value
-     * @return {@code true} if the attribute contains the value within the wait timeout, {@code false} otherwise
-     */
-    public boolean attributeContains(String attribute, String value) {
-        try {
-            waitForAttributeContains(attribute, value);
-            return true;
-        } catch (NoSuchElementException | TimeoutException e) {
-            log.debug(e.getMessage());
-            return false;
-        }
-    }
-
-    /**
      * Checks, without throwing, whether this element becomes visible.
      *
      * @return {@code true} if the element is visible within the wait timeout, {@code false} otherwise
      */
-    public boolean beDisplayed() {
-        try {
-            waitForVisible();
-            return true;
-        } catch (NoSuchElementException | TimeoutException e) {
-            log.debug(e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Waits until this element becomes stale (detached from the DOM).
-     */
-    public void waitForStaleness() {
-        SeleniumWait.waitForStaleness(getElement());
-    }
-
-    /**
-     * Checks, without throwing, whether this element's visible text equals the given text.
-     *
-     * @param text the expected text
-     * @return {@code true} if the text matches within the wait timeout, {@code false} otherwise
-     */
-    public boolean textEquals(String text) {
-        try {
-            waitForTextEquals(text);
-            return true;
-        } catch (NoSuchElementException | TimeoutException e) {
-            log.debug(e.getMessage());
-            return false;
-        }
+    public boolean isDisplayed() {
+        return RetryAction.retry(() -> getElement() != null && getElement().isDisplayed());
     }
 
     /**
@@ -551,11 +361,6 @@ public class BaseElement {
      * @return {@code true} if the element is found within the wait timeout, {@code false} otherwise
      */
     public boolean exists() {
-        try {
-            return waitForExist() != null;
-        } catch (NoSuchElementException | TimeoutException e) {
-            log.debug(e.getMessage());
-            return false;
-        }
+        return SeleniumWait.waitForExist(this) != null;
     }
 }

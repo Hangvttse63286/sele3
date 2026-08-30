@@ -24,6 +24,7 @@ public class Configuration {
     private Duration timeout;
     private Duration pollingInterval;
     private String baseUrl;
+    private String windowSize;
 
     /**
      * Initiate Configuration
@@ -42,6 +43,7 @@ public class Configuration {
             setTimeout(Duration.ofMillis(Long.parseLong(System.getProperty("timeout", "60000"))));
             setPollingInterval(Duration.ofMillis(Long.parseLong(System.getProperty("pollingInterval", "500"))));
             setBaseUrl(System.getProperty("baseUrl", "http://localhost:8080"));
+            setWindowSize(System.getProperty("windowSize", "1920,1080"));
         }
     }
 

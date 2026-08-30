@@ -35,15 +35,18 @@ public class DriverContainer {
     }
 
     /**
-     * Quits the current thread's underlying WebDriver and removes the thread-local binding,
-     * regardless of whether quitting succeeds.
+     * Quits the current thread's underlying WebDriver, if one was created, and removes the
+     * thread-local binding regardless of whether quitting succeeds.
      *
      * @throws RuntimeException if an error occurs while quitting the driver
      */
     public void quit() {
         try {
-            log.info("Quitting driver");
-            this.getDriver().getWebDriver().quit();
+            Driver driver = threadDriver.get();
+            if (driver != null && driver.getDriver() != null) {
+                log.info("Quitting driver");
+                driver.getDriver().quit();
+            }
         } catch (Exception e) {
             throw new RuntimeException("Error occurs when trying to quit driver", e);
         } finally {

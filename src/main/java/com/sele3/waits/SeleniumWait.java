@@ -3,9 +3,16 @@ package com.sele3.waits;
 import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.ElementClickInterceptedException;
+import org.openqa.selenium.ElementNotInteractableException;
+import org.openqa.selenium.InvalidElementStateException;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedCondition;
@@ -13,30 +20,67 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.sele3.drivers.DriverRunner;
+import com.sele3.elements.BaseElement;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SeleniumWait {
     
+    private static final List<Class<? extends Throwable>> COMMON_EXCEPTIONS =
+        List.of(
+            StaleElementReferenceException.class,
+            NoSuchElementException.class);
+
+    private static final List<Class<? extends Throwable>> CLICK_EXCEPTIONS =
+        Stream.concat(
+                COMMON_EXCEPTIONS.stream(),
+                Stream.of(
+                    ElementClickInterceptedException.class,
+                    ElementNotInteractableException.class,
+                    InvalidElementStateException.class))
+            .toList();
+
+    
     /**
-     * Builds a {@link WebDriverWait} using the current driver's configured timeout and polling interval.
+     * Builds a {@link WebDriverWait} using the current driver's configured timeout and polling
+     * interval. Ignores nothing during polling; use {@link #getWebDriverWait(List)} to have the
+     * wait ignore specific exceptions (e.g. {@link StaleElementReferenceException}) while polling.
      *
      * @return a new {@link WebDriverWait}
      */
     public static WebDriverWait getWebDriverWait() {
-        return new WebDriverWait(DriverRunner.getWebDriver(), DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval());
+        return getWebDriverWait(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval(), null);
     }
 
     /**
-     * Builds a {@link WebDriverWait} using an explicit timeout and polling interval.
+     * Builds a {@link WebDriverWait} using the current driver's configured timeout and polling
+     * interval, ignoring the given exceptions during polling so a condition that re-locates an
+     * element (e.g. {@link ExpectedConditions#visibilityOfElementLocated}) retries instead of failing.
+     *
+     * @param ignoreExceptions the exception types to ignore while polling, or {@code null} to ignore none
+     * @return a new {@link WebDriverWait}
+     */
+    public static WebDriverWait getWebDriverWait(List<Class<? extends Throwable>> ignoreExceptions) {
+        return getWebDriverWait(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval(), ignoreExceptions);
+    }
+
+    /**
+     * Builds a {@link WebDriverWait} using an explicit timeout and polling interval, ignoring the
+     * given exceptions during polling so a condition that re-locates an element (e.g.
+     * {@link ExpectedConditions#visibilityOfElementLocated}) retries instead of failing.
      *
      * @param timeout the maximum time to wait
      * @param pollingInterval how often to check the condition while waiting
+     * @param ignoreExceptions the exception types to ignore while polling, or {@code null} to ignore none
      * @return a new {@link WebDriverWait}
      */
-    public static WebDriverWait getWebDriverWait(Duration timeout, Duration pollingInterval) {
-        return new WebDriverWait(DriverRunner.getWebDriver(), timeout, pollingInterval);
+    public static WebDriverWait getWebDriverWait(Duration timeout, Duration pollingInterval, List<Class<? extends Throwable>> ignoreExceptions) {
+        WebDriverWait wait = new WebDriverWait(DriverRunner.getWebDriver(), timeout, pollingInterval);
+        if (ignoreExceptions != null) {
+            wait.ignoreAll(ignoreExceptions);
+        }
+        return wait;
     }
 
     /**
@@ -48,7 +92,20 @@ public class SeleniumWait {
      * @return the result produced by {@code condition} once satisfied
      */
     public static <T> T executeWait(Function<WebDriver, T> condition) {
-        return getWebDriverWait().until(condition);
+        return executeWait(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval(), null, condition);
+    }
+
+    /**
+     * Waits, using the current driver's configured timeout and polling interval, until the given condition returns a
+     * non-null/non-false result.
+     *
+     * @param ignoreExceptions the list of exceptions to ignore
+     * @param condition the condition to evaluate against the {@link WebDriver}
+     * @param <T> the result type of the condition
+     * @return the result produced by {@code condition} once satisfied
+     */
+    public static <T> T executeWait(List<Class<? extends Throwable>> ignoreExceptions, Function<WebDriver, T> condition) {
+        return executeWait(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval(), ignoreExceptions, condition);
     }
 
     /**
@@ -57,12 +114,19 @@ public class SeleniumWait {
      *
      * @param timeout the maximum time to wait
      * @param pollingInterval how often to check the condition while waiting
+     * @param ignoreExceptions the list of exceptions to ignore
      * @param condition the condition to evaluate against the {@link WebDriver}
      * @param <T> the result type of the condition
      * @return the result produced by {@code condition} once satisfied
+     * @throws RuntimeException wrapping the {@link TimeoutException} if {@code condition} never succeeds before {@code timeout} elapses
      */
-    public static <T> T executeWait(Duration timeout, Duration pollingInterval, Function<WebDriver, T> condition) {
-        return getWebDriverWait(timeout, pollingInterval).until(condition);
+    public static <T> T executeWait(Duration timeout, Duration pollingInterval, List<Class<? extends Throwable>> ignoreExceptions, Function<WebDriver, T> condition) {
+        try {
+            return getWebDriverWait(timeout, pollingInterval, ignoreExceptions).until(condition);
+        } catch (TimeoutException e) {
+            log.error("Error during wait execution", e);
+            throw new RuntimeException(String.format("Timeout after %s", DriverRunner.getConfig().getTimeout()), e);
+        }
     }
 
     /**
@@ -138,48 +202,50 @@ public class SeleniumWait {
     /**
      * Waits until an element matching the locator is present in the DOM.
      *
-     * @param locator the locator to search for
+     * @param element the element to search for
      * @return the found {@link WebElement}
      */
-    public static WebElement waitForExist(By locator) {
-        return executeWait(ExpectedConditions.presenceOfElementLocated(locator));
+    public static WebElement waitForExist(BaseElement element) {
+        return executeWait(COMMON_EXCEPTIONS, ExpectedConditions.presenceOfElementLocated(element.getLocator()));
     }
 
     /**
      * Waits until at least one element matching the locator is present in the DOM.
      *
-     * @param locator the locator to search for
+     * @param element the element to search for
      * @return all matching {@link WebElement}s
      */
-    public static List<WebElement> waitForAllExist(By locator) {
-        return executeWait(ExpectedConditions.presenceOfAllElementsLocatedBy(locator));
+    public static List<WebElement> waitForAllExist(BaseElement element) {
+        return executeWait(COMMON_EXCEPTIONS, ExpectedConditions.presenceOfAllElementsLocatedBy(element.getLocator()));
     }
 
     /**
      * Waits until an element matching the locator is present and visible.
      *
-     * @param locator the locator to search for
+     * @param element the element to wait for
+     * @return the visible {@link WebElement}
      */
-    public static void waitForVisible(By locator) {
-        executeWait(ExpectedConditions.visibilityOfElementLocated(locator));
+    public static WebElement waitForVisible(BaseElement element) {
+        return executeWait(COMMON_EXCEPTIONS, ExpectedConditions.visibilityOfElementLocated(element.getLocator()));
     }
 
     /**
      * Waits until all elements matching the locator are present and visible.
      *
-     * @param locator the locator to search for
+     * @param element the element to wait for
+     * @return the visible {@link WebElement}s
      */
-    public static void waitForAllVisible(By locator) {
-        executeWait(ExpectedConditions.visibilityOfAllElementsLocatedBy(locator));
+    public static List<WebElement> waitForAllVisible(BaseElement element) {
+        return executeWait(COMMON_EXCEPTIONS, ExpectedConditions.visibilityOfAllElementsLocatedBy(element.getLocator()));
     }
 
     /**
      * Waits until no element matching the locator is visible (or it is no longer present).
      *
-     * @param locator the locator to search for
+     * @param element the element to search for
      */
-    public static void waitForInvisible(By locator) {
-        executeWait(ExpectedConditions.invisibilityOfElementLocated(locator));
+    public static void waitForInvisible(BaseElement element) {
+        executeWait(ExpectedConditions.invisibilityOfElementLocated(element.getLocator()));
     }
 
     /**
@@ -187,8 +253,8 @@ public class SeleniumWait {
      *
      * @param element the element to check
      */
-    public static void waitForEnabled(WebElement element) {
-        executeWait(driver -> element.isEnabled());
+    public static void waitForEnabled(BaseElement element) {
+        executeWait(COMMON_EXCEPTIONS, driver -> driver.findElement(element.getLocator()).isEnabled());
     }
 
     /**
@@ -196,18 +262,18 @@ public class SeleniumWait {
      *
      * @param element the element to check
      */
-    public static void waitForDisabled(WebElement element) {
-        executeWait(driver -> !element.isEnabled());
+    public static void waitForDisabled(BaseElement element) {
+        executeWait(COMMON_EXCEPTIONS, driver -> !driver.findElement(element.getLocator()).isEnabled());
     }
 
     /**
      * Waits until an element matching the locator is visible and enabled.
      *
-     * @param locator the locator to search for
+     * @param element the element to search for
      * @return the clickable {@link WebElement}
      */
-    public static WebElement waitForClickable(By locator) {
-        return executeWait(ExpectedConditions.elementToBeClickable(locator));
+    public static WebElement waitForClickable(BaseElement element) {
+        return executeWait(CLICK_EXCEPTIONS, ExpectedConditions.elementToBeClickable(element.getLocator()));
     }
 
     /**
@@ -216,8 +282,8 @@ public class SeleniumWait {
      * @param element the element to check
      * @param value the expected value
      */
-    public static void waitForValueEquals(WebElement element, String value) {
-        executeWait(driver -> element.getAttribute("value").equals(value));
+    public static void waitForValueEquals(BaseElement element, String value) {
+        executeWait(COMMON_EXCEPTIONS, driver -> driver.findElement(element.getLocator()).getAttribute("value").equals(value));
     }
 
     /**
@@ -226,8 +292,8 @@ public class SeleniumWait {
      * @param element the element to check
      * @param value the value expected to no longer match
      */
-    public static void waitForValueNotEquals(WebElement element, String value) {
-        executeWait(driver -> !element.getAttribute("value").equals(value));
+    public static void waitForValueNotEquals(BaseElement element, String value) {
+        executeWait(COMMON_EXCEPTIONS, driver -> !driver.findElement(element.getLocator()).getAttribute("value").equals(value));
     }
 
     /**
@@ -236,8 +302,8 @@ public class SeleniumWait {
      * @param element the element to check
      * @param value the substring expected to appear in the value
      */
-    public static void waitForValueContains(WebElement element, String value) {
-        executeWait(driver -> element.getAttribute("value").contains(value));
+    public static void waitForValueContains(BaseElement element, String value) {
+        executeWait(COMMON_EXCEPTIONS, driver -> driver.findElement(element.getLocator()).getAttribute("value").contains(value));
     }
 
     /**
@@ -246,8 +312,8 @@ public class SeleniumWait {
      * @param element the element to check
      * @param text the expected text
      */
-    public static void waitForTextEquals(WebElement element, String text) {
-        executeWait(driver -> element.getText().equals(text));
+    public static void waitForTextEquals(BaseElement element, String text) {
+        executeWait(COMMON_EXCEPTIONS, driver -> driver.findElement(element.getLocator()).getText().equals(text));
     }
 
     /**
@@ -256,18 +322,18 @@ public class SeleniumWait {
      * @param element the element to check
      * @param text the text expected to no longer match
      */
-    public static void waitForTextNotEquals(WebElement element, String text) {
-        executeWait(driver -> !element.getText().equals(text));
+    public static void waitForTextNotEquals(BaseElement element, String text) {
+        executeWait(COMMON_EXCEPTIONS, driver -> !driver.findElement(element.getLocator()).getText().equals(text));
     }
 
     /**
      * Waits until the element matching the locator contains the given text.
      *
-     * @param locator the locator to search for
+     * @param element the element to check
      * @param text the substring expected to appear in the element's text
      */
-    public static void waitForTextContains(By locator, String text) {
-        executeWait(ExpectedConditions.textToBePresentInElementLocated(locator, text));
+    public static void waitForTextContains(BaseElement element, String text) {
+        executeWait(COMMON_EXCEPTIONS, ExpectedConditions.textToBePresentInElementLocated(element.getLocator(), text));
     }
 
     /**
@@ -277,8 +343,8 @@ public class SeleniumWait {
      * @param attribute the attribute name
      * @param value the expected value
      */
-    public static void waitForAttributeEquals(WebElement element, String attribute, String value) {
-        executeWait(driver -> element.getAttribute(attribute).equals(value));
+    public static void waitForAttributeEquals(BaseElement element, String attribute, String value) {
+        executeWait(COMMON_EXCEPTIONS, driver -> driver.findElement(element.getLocator()).getAttribute(attribute).equals(value));
     }
 
     /**
@@ -288,8 +354,8 @@ public class SeleniumWait {
      * @param attribute the attribute name
      * @param value the value expected to no longer match
      */
-    public static void waitForAttributeNotEquals(WebElement element, String attribute, String value) {
-        executeWait(driver -> !element.getAttribute(attribute).equals(value));
+    public static void waitForAttributeNotEquals(BaseElement element, String attribute, String value) {
+        executeWait(COMMON_EXCEPTIONS, driver -> !driver.findElement(element.getLocator()).getAttribute(attribute).equals(value));
     }
 
     /**
@@ -299,18 +365,18 @@ public class SeleniumWait {
      * @param attribute the attribute name
      * @param value the substring expected to appear in the attribute's value
      */
-    public static void waitForAttributeContains(WebElement element, String attribute, String value) {
-        executeWait(ExpectedConditions.attributeContains(element, attribute, value));
+    public static void waitForAttributeContains(BaseElement element, String attribute, String value) {
+        executeWait(COMMON_EXCEPTIONS, ExpectedConditions.attributeContains(element.getLocator(), attribute, value));
     }
 
     /**
      * Waits until the {@code <select>} element matching the locator has its {@code <option>}
      * children populated.
      *
-     * @param locator the locator of the {@code <select>} element
+     * @param element the {@code <select>} element to check
      */
-    public static void waitForSelectOptionsLoaded(By locator) {
-        executeWait(ExpectedConditions.presenceOfNestedElementsLocatedBy(locator, By.tagName("option")));
+    public static void waitForSelectOptionsLoaded(BaseElement element) {
+        executeWait(CLICK_EXCEPTIONS, ExpectedConditions.presenceOfNestedElementsLocatedBy(element.getLocator(), By.tagName("option")));
     }
 
     /**
@@ -318,8 +384,8 @@ public class SeleniumWait {
      *
      * @param element the element to check
      */
-    public static void waitForChecked(WebElement element) {
-        executeWait(driver -> element.isSelected());
+    public static void waitForChecked(BaseElement element) {
+        executeWait(CLICK_EXCEPTIONS, driver -> driver.findElement(element.getLocator()).isSelected());
     }
 
     /**
@@ -327,16 +393,7 @@ public class SeleniumWait {
      *
      * @param element the element to check
      */
-    public static void waitForUnchecked(WebElement element) {
-        executeWait(driver -> !element.isSelected());
-    }
-
-    /**
-     * Waits until the given element becomes stale (detached from the DOM).
-     *
-     * @param element the element expected to go stale
-     */
-    public static void waitForStaleness(WebElement element) {
-        SeleniumWait.executeWait(ExpectedConditions.stalenessOf(element));
+    public static void waitForUnchecked(BaseElement element) {
+        executeWait(CLICK_EXCEPTIONS, driver -> !driver.findElement(element.getLocator()).isSelected());
     }
 }

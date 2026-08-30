@@ -1,5 +1,7 @@
 package com.sele3.drivers;
 
+import java.time.Duration;
+
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
@@ -9,9 +11,7 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 import com.sele3.configs.Configuration;
-import com.sele3.waits.SeleniumWait;
 
-import io.qameta.allure.Step;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -19,20 +19,18 @@ public class DriverRunner {
     private static final DriverContainer driverContainer = new DriverContainer();
 
     /**
-     * Initializes and binds a {@link WebDriver} to the current thread for the given configuration,
-     * then maximizes the window (or sets a fixed 1920x1080 size, if headless) when requested.
+     * Initializes and binds a {@link WebDriver} to the current thread for the given configuration.
+     * Chrome and Edge start maximized via a launch argument in their driver options; Firefox has
+     * no equivalent CLI flag, so when {@code config.isStartMaximized()} is true and not headless,
+     * its window is maximized here after launch instead.
      *
      * @param config the test run configuration
      */
     public static void initDriver(Configuration config) {
         driverContainer.initialize(config);
 
-        if (config.isStartMaximized()) {
-            if (config.isHeadless()) {
-                setWindowSize(1920, 1080);
-            } else {
-                maximizeWindow();
-            }
+        if (config.getPlatform() == Platform.FIREFOX && config.isStartMaximized() && !config.isHeadless()) {
+            getWebDriver().manage().window().maximize();
         }
     }
 
@@ -55,15 +53,22 @@ public class DriverRunner {
     }
 
     /**
-     * Navigates the browser to the given URL and waits for the page to finish loading.
+     * Navigates the browser to the given URL.
      *
      * @param url the URL to navigate to
      */
-    @Step("Navigate to {url}")
     public static void open(String url) {
         log.info("Opening URL: {}", url);
         getWebDriver().navigate().to(url);
-        SeleniumWait.waitForPageToLoad();
+    }
+
+    /**
+     * Navigates the browser to the current configuration's base URL.
+     *
+     * @see #open(String)
+     */
+    public static void open() {
+        open(getConfig().getBaseUrl());
     }
 
     /**
@@ -161,15 +166,16 @@ public class DriverRunner {
     }
 
     /**
-     * Pauses the current thread for the given duration, ignoring interruption.
+     * Sleeps the current thread for the given duration.
      *
-     * @param milliseconds how long to pause, in milliseconds
+     * @param duration how long to sleep
      */
-    public static void pause(long milliseconds) {
+    public static void sleep(Duration duration) {
         try {
-            Thread.sleep(milliseconds);
+            Thread.sleep(duration);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.warn("Thread sleep interrupted", e);
+            Thread.currentThread().interrupt();
         }
     }
 

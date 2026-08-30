@@ -36,16 +36,28 @@ public class DriverFactory {
         log.debug("pollingInterval={}", config.getPollingInterval());
         log.debug("pageLoadStrategy={}", config.getPageLoadStrategy());
 
-        IDriverFactory driverFactory;
-
-        switch (config.getPlatform()) {
-            case CHROME -> driverFactory = new ChromeDriverFactory();
-            case FIREFOX -> driverFactory = new FirefoxDriverFactory();
-            case EDGE -> driverFactory = new EdgeDriverFactory();
+        WebDriver driver = switch (config.getPlatform()) {
+            case CHROME -> createWebDriver(new ChromeDriverFactory(), config);
+            case FIREFOX -> createWebDriver(new FirefoxDriverFactory(), config);
+            case EDGE -> createWebDriver(new EdgeDriverFactory(), config);
             default -> throw new IllegalArgumentException("Unsupported platform: " + config.getPlatform());
-        }
+        };
+        
+        return driver;
+    }
 
-        AbstractDriverOptions<?> options = driverFactory.getOptions(config);
+    /**
+     * Builds the driver-specific options and creates the {@link WebDriver}, tying the options
+     * type to the factory that produced it so no runtime type check is needed.
+     *
+     * @param driverFactory the browser-specific factory to use
+     * @param config the test run configuration
+     * @param <T> the driver-specific options type
+     * @return the created {@link WebDriver}
+     * @throws RuntimeException if {@code config.getRemoteUrl()} is not a valid URL
+     */
+    private static <T extends AbstractDriverOptions<?>> WebDriver createWebDriver(IDriverFactory<T> driverFactory, Configuration config) {
+        T options = driverFactory.getOptions(config);
 
         if (config.isRemote()) {
             try {
@@ -53,8 +65,7 @@ public class DriverFactory {
             } catch (MalformedURLException | URISyntaxException e) {
                 throw new RuntimeException("Invalid remote url: " + config.getRemoteUrl(), e);
             }
-        } else {
-            return driverFactory.createDriver(options);
         }
+        return driverFactory.createDriver(options);
     }
 }

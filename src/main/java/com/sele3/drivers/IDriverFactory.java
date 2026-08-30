@@ -5,14 +5,14 @@ import org.openqa.selenium.remote.AbstractDriverOptions;
 
 import com.sele3.configs.Configuration;
 
-public interface IDriverFactory {
+public interface IDriverFactory<T extends AbstractDriverOptions<?>> {
     /**
      * Creates a browser-specific {@link WebDriver} instance from the given options.
      *
      * @param options the driver options to launch the browser with
      * @return the created {@link WebDriver}
      */
-    WebDriver createDriver(AbstractDriverOptions<?> options);
+    WebDriver createDriver(T options);
 
     /**
      * Builds the browser-specific driver options from the given {@link Configuration}.
@@ -20,5 +20,5 @@ public interface IDriverFactory {
      * @param config the test run configuration
      * @return the populated driver options
      */
-    AbstractDriverOptions<?> getOptions(Configuration config);
+    T getOptions(Configuration config);
 }
