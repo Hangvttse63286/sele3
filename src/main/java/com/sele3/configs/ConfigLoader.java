@@ -39,13 +39,10 @@ public class ConfigLoader {
             jsonReader = new JsonReader(new FileReader(jsonFile));
         } catch (FileNotFoundException e) {
             log.error("Json file is not found: {}", jsonFile);
+            throw new RuntimeException("Json file is not found");
         }
 
-        if (jsonReader == null) {
-            throw new RuntimeException("Json file is not found");
-        } else {
-            Gson gson = new Gson();
-            return gson.fromJson(jsonReader, clazz);
-        }
+        Gson gson = new Gson();
+        return gson.fromJson(jsonReader, clazz);
     }
 }
