@@ -1,0 +1,204 @@
+classDiagram
+    namespace TestEntry {
+        class BaseTest {
+            ~Configuration config
+            ~Platform platform
+            +setUp(String platform, String remote, String remoteUrl) void
+            +tearDown() void
+        }
+        class TestClass {
+            +pageObject : PageObject
+            +testMethod() void
+        }
+    }
+
+    namespace Pages {
+        class PageObject {
+            -BaseElement element
+            +PageAction() void
+            +VerifyAction() void
+        }
+    }
+
+    namespace Configs {
+        class Configuration {
+            -String platform
+            -boolean headless
+            -boolean remote
+            -String remoteUrl
+            -boolean startMaximized
+            -String pageLoadStrategy
+            -MutableCapabilities capabilities
+            -long timeout
+            -long pollingInterval
+            +Configuration(boolean initial)
+        }
+        class ConfigLoader {
+            +readConfigFromJsonFile(String jsonFile)$ Configuration
+        }
+    }
+
+    namespace Consts {
+        class Platform {
+            <<enumeration>>
+            CHROME
+            FIREFOX
+            EDGE
+            +getPlatform() String
+            +fromString(String)$ Platform
+        }
+        class LocatorType {
+            <<enumeration>>
+            ID
+            NAME
+            CLASSNAME
+            LINK
+            CSS
+            XPATH
+        }
+    }
+
+    namespace Drivers {
+        class Driver {
+            -WebDriver driver
+            -DriverFactory factory
+            -Configuration config
+            +Driver(Configuration config)
+            +createDriver() void
+            +getWebDriver() WebDriver
+        }
+        class DriverContainer {
+            -ThreadLocal~Driver~ threadDriver
+            +initialize(Configuration config) void
+            +getDriver() Driver
+            +quit() void
+        }
+        class DriverRunner {
+            -DriverContainer driverContainer$
+            -WebDriverWait wait$
+            +initDriver(Configuration)$ void
+            +getWebDriver()$ WebDriver
+            +open(String url)$ void
+            +close()$ void
+            +waitForPageToLoad()$ void
+            +waitForJQueryToLoad()$ void
+            +executeJS(String, Object...)$ Object
+            +takeScreenShot(OutputType~T~)$ T
+        }
+        class IDriverFactory {
+            <<interface>>
+            +createDriver(Configuration) WebDriver
+        }
+        class DriverFactory {
+            +createWebDriver(Configuration) WebDriver
+            +getPlatformFactory(String) IDriverFactory
+        }
+        class ChromeDriverFactory {
+            +createDriver(Configuration) WebDriver
+        }
+        class FirefoxDriverFactory {
+            +createDriver(Configuration) WebDriver
+        }
+        class EdgeDriverFactory {
+            +createDriver(Configuration) WebDriver
+        }
+    }
+
+    namespace Elements {
+        class BaseElement {
+            -String locator
+            -String dynamicLocator
+            -LocatorType locatorType
+            -By by
+            -WebElement element
+            +BaseElement(String locator)
+            +set(Object... args) void
+            +click() void
+            +getText() String
+            +getElement() WebElement
+        }
+        class Element {
+            +Element(String locator)
+            +set(Object... args) void
+            +click() void
+            +getText() String
+            +getElement() WebElement
+        }
+    }
+
+    namespace Assertions {
+        class Assertion {
+            -SoftAssertion softAssertion$
+            +assertTrue(boolean, String)$ void
+            +assertEquals(T, T, String)$ void
+            +assertAll(String)$ void
+        }
+        class SoftAssertion {
+            -Map~AssertionError,IAssert~ errorList$
+            +assertAll(String) void
+            #doAssert(IAssert assertResult) void
+        }
+    }
+
+    namespace Listeners {
+        class TestListener {
+            +String testCaseName
+            +onTestStart(ITestResult) void
+            +onTestFailure(ITestResult) void
+            +onBeforeClass(ITestClass) void
+        }
+        class ReportManager {
+            +initReport() void
+            +flushReport() void
+            +takeScreenshot(TestResult result) void
+        }
+        class IReportFactory {
+            <<interface>>
+            +log(String) void
+            +takeScreenshot(String) void
+            +attachScreenshot(String) void
+            +flushReport() void
+        }
+        class ExtentReportFactory {
+            +log(String) void
+            +takeScreenshot(String) void
+            +attachScreenshot(String) void
+            +flushReport() void
+        }
+        class AllureReportFactory {
+            +log(String) void
+            +takeScreenshot(String) void
+            +attachScreenshot(String) void
+            +flushReport() void
+        }
+    }
+
+    BaseTest o-- Configuration
+    BaseTest o-- Platform
+    BaseTest ..> DriverRunner : init / close
+
+    ConfigLoader ..> Configuration : creates
+
+    Driver *-- DriverFactory : factory
+    Driver o-- Configuration : config
+    DriverContainer *-- Driver : threadDriver
+    DriverRunner ..> DriverContainer : delegates
+
+    DriverFactory ..> IDriverFactory : instantiates
+    ChromeDriverFactory ..|> IDriverFactory
+    FirefoxDriverFactory ..|> IDriverFactory
+    EdgeDriverFactory ..|> IDriverFactory
+
+    Assertion o-- SoftAssertion
+    TestListener ..> ReportManager : uses
+    ReportManager ..> IReportFactory : delegates
+    ExtentReportFactory ..|> IReportFactory
+    AllureReportFactory ..|> IReportFactory
+
+    BaseElement o-- LocatorType : locatorType
+    Element <|-- BaseElement : extends
+
+    BaseTest <|-- TestClass : extends
+    TestClass o-- PageObject : pageObject
+    TestClass ..> Assertion : uses
+    PageObject o-- Element : element
