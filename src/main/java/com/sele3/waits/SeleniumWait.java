@@ -35,7 +35,7 @@ public class SeleniumWait {
      * @return a new {@link WebDriverWait}
      */
     public static WebDriverWait getWebDriverWait() {
-        return getWebDriverWait(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval(), true);
+        return getWebDriverWait(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval());
     }
 
     /**
@@ -43,14 +43,10 @@ public class SeleniumWait {
      *
      * @param timeout the maximum time to wait
      * @param pollingInterval how often to check the condition while waiting
-     * @param ignoreStale whether to ignore {@link StaleElementReferenceException} while polling
      * @return a new {@link WebDriverWait}
      */
-    public static WebDriverWait getWebDriverWait(Duration timeout, Duration pollingInterval, boolean ignoreStale) {
+    public static WebDriverWait getWebDriverWait(Duration timeout, Duration pollingInterval) {
         WebDriverWait wait = new WebDriverWait(DriverRunner.getWebDriver(), timeout, pollingInterval);
-        if (ignoreStale) {
-            wait.ignoring(StaleElementReferenceException.class);
-        }
         return wait;
     }
 
@@ -62,13 +58,12 @@ public class SeleniumWait {
      * @return a new {@link WebDriverWait}
      */
     public static WebDriverWait getWebDriverWait(Duration timeout) {
-        return getWebDriverWait(timeout, DriverRunner.getConfig().getPollingInterval(), true);
+        return getWebDriverWait(timeout, DriverRunner.getConfig().getPollingInterval());
     }
 
     /**
      * Waits, using an explicit timeout and the current driver's configured polling interval,
-     * until the given condition returns a non-null/non-false result. Ignores
-     * {@link StaleElementReferenceException} while polling.
+     * until the given condition returns a non-null/non-false result.
      *
      * @param timeout the maximum time to wait
      * @param condition the condition to evaluate against the {@link WebDriver}
@@ -88,7 +83,7 @@ public class SeleniumWait {
      * @return the result produced by {@code condition} once satisfied
      */
     public static <T> T executeWait(Function<WebDriver, T> condition) {
-        return executeWait(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval(), true, condition);
+        return executeWait(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval(), condition);
     }
 
     /**
@@ -97,13 +92,12 @@ public class SeleniumWait {
      *
      * @param timeout the maximum time to wait
      * @param pollingInterval how often to check the condition while waiting
-     * @param ignoreStale whether to ignore stale element reference exceptions
      * @param condition the condition to evaluate against the {@link WebDriver}
      * @param <T> the result type of the condition
      * @return the result produced by {@code condition} once satisfied
      */
-    public static <T> T executeWait(Duration timeout, Duration pollingInterval, boolean ignoreStale, Function<WebDriver, T> condition) {
-        return getWebDriverWait(timeout, pollingInterval, ignoreStale).until(condition);
+    public static <T> T executeWait(Duration timeout, Duration pollingInterval, Function<WebDriver, T> condition) {
+        return getWebDriverWait(timeout, pollingInterval).until(condition);
     }
 
     /**
@@ -278,7 +272,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForValueEquals(BaseElement element, String value, Duration timeout) {
-        executeWait(timeout, driver -> driver.findElement(element.getLocator()).getAttribute("value").equals(value));
+        executeWait(timeout, driver -> element.getElement().getAttribute("value").equals(value));
     }
 
     /**
@@ -289,7 +283,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForValueNotEquals(BaseElement element, String value, Duration timeout) {
-        executeWait(timeout, driver -> !driver.findElement(element.getLocator()).getAttribute("value").equals(value));
+        executeWait(timeout, driver -> !element.getElement().getAttribute("value").equals(value));
     }
 
     /**
@@ -300,7 +294,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForValueContains(BaseElement element, String value, Duration timeout) {
-        executeWait(timeout, driver -> driver.findElement(element.getLocator()).getAttribute("value").contains(value));
+        executeWait(timeout, driver -> element.getElement().getAttribute("value").contains(value));
     }
 
     /**
@@ -311,7 +305,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForTextEquals(BaseElement element, String text, Duration timeout) {
-        executeWait(timeout, driver -> driver.findElement(element.getLocator()).getText().equals(text));
+        executeWait(timeout, driver -> element.getElement().getText().equals(text));
     }
 
     /**
@@ -322,7 +316,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForTextNotEquals(BaseElement element, String text, Duration timeout) {
-        executeWait(timeout, driver -> !driver.findElement(element.getLocator()).getText().equals(text));
+        executeWait(timeout, driver -> !element.getElement().getText().equals(text));
     }
 
     /**
@@ -345,7 +339,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForAttributeEquals(BaseElement element, String attribute, String value, Duration timeout) {
-        executeWait(timeout, driver -> driver.findElement(element.getLocator()).getAttribute(attribute).equals(value));
+        executeWait(timeout, driver -> element.getElement().getAttribute(attribute).equals(value));
     }
 
     /**
@@ -357,7 +351,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForAttributeNotEquals(BaseElement element, String attribute, String value, Duration timeout) {
-        executeWait(timeout, driver -> !driver.findElement(element.getLocator()).getAttribute(attribute).equals(value));
+        executeWait(timeout, driver -> !element.getElement().getAttribute(attribute).equals(value));
     }
 
     /**
@@ -390,7 +384,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForChecked(BaseElement element, Duration timeout) {
-        executeWait(timeout, driver -> driver.findElement(element.getLocator()).isSelected());
+        executeWait(timeout, driver -> element.getElement().isSelected());
     }
 
     /**
@@ -400,27 +394,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForUnchecked(BaseElement element, Duration timeout) {
-        executeWait(timeout, driver -> !driver.findElement(element.getLocator()).isSelected());
-    }
-
-    /**
-     * Waits until the given element is displayed.
-     *
-     * @param element the element to check
-     * @param timeout the maximum time to wait
-     */
-    public static void waitForDisplayed(BaseElement element, Duration timeout) {
-        executeWait(timeout, driver -> driver.findElement(element.getLocator()).isDisplayed());
-    }
-
-    /**
-     * Waits until the given element is not displayed (or is no longer present).
-     *
-     * @param element the element to check
-     * @param timeout the maximum time to wait
-     */
-    public static void waitForNotDisplayed(BaseElement element, Duration timeout) {
-        executeWait(timeout, driver -> !driver.findElement(element.getLocator()).isDisplayed());
+        executeWait(timeout, driver -> !element.getElement().isSelected());
     }
 
     /**
@@ -680,25 +654,5 @@ public class SeleniumWait {
      */
     public static void waitForUnchecked(BaseElement element) {
         waitForUnchecked(element, DriverRunner.getConfig().getTimeout());
-    }
-
-    /**
-     * Convenience overload of {@link #waitForDisplayed(BaseElement, Duration)} using the current
-     * driver's configured timeout.
-     *
-     * @param element the element to check
-     */
-    public static void waitForDisplayed(BaseElement element) {
-        waitForDisplayed(element, DriverRunner.getConfig().getTimeout());
-    }
-
-    /**
-     * Convenience overload of {@link #waitForNotDisplayed(BaseElement, Duration)} using the
-     * current driver's configured timeout.
-     *
-     * @param element the element to check
-     */
-    public static void waitForNotDisplayed(BaseElement element) {
-        waitForNotDisplayed(element, DriverRunner.getConfig().getTimeout());
     }
 }

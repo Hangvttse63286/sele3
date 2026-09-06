@@ -188,24 +188,26 @@ public class BaseElement {
     }
 
     /**
-     * Submits the form containing this element.
+     * Clears this element's current value, then types the given character sequences into it.
+     *
+     * @param values the character sequences to send
      */
-    public void submit() {
+    public void clearAndEnter(CharSequence... values) {
         RetryAction.retry(() -> {
-            SeleniumWait.waitForClickable(this).submit();
-        }, RetryAction.CLICK_EXCEPTIONS);
+            WebElement element = SeleniumWait.waitForClickable(this);
+            element.clear();
+            element.sendKeys(values);
+        }, RetryAction.SEND_KEYS_EXCEPTIONS);
     }
 
     /**
-     * Clears this element's current value, then types the given character sequences into it.
+     * Types the given character sequences into this element, without clearing its current value first.
      *
      * @param values the character sequences to send
      */
     public void enter(CharSequence... values) {
         RetryAction.retry(() -> {
-            WebElement element = SeleniumWait.waitForClickable(this);
-            element.clear();
-            element.sendKeys(values);
+            SeleniumWait.waitForClickable(this).sendKeys(values);
         }, RetryAction.SEND_KEYS_EXCEPTIONS);
     }
 

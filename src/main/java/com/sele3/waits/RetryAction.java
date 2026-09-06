@@ -1,7 +1,6 @@
 package com.sele3.waits;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -36,12 +35,7 @@ public class RetryAction {
      * state yet ({@link ElementNotInteractableException}). Used for click/select-style actions.
      */
     public static final List<Class<? extends Throwable>> CLICK_EXCEPTIONS =
-        Stream.concat(
-                COMMON_EXCEPTIONS.stream(),
-                Stream.of(
-                    ElementClickInterceptedException.class,
-                    ElementNotInteractableException.class))
-            .toList();
+        extend(COMMON_EXCEPTIONS, ElementClickInterceptedException.class, ElementNotInteractableException.class);
 
     /**
      * {@link #CLICK_EXCEPTIONS} plus {@link InvalidElementStateException}, which
@@ -49,10 +43,13 @@ public class RetryAction {
      * accepts input (e.g. still disabled or read-only).
      */
     public static final List<Class<? extends Throwable>> SEND_KEYS_EXCEPTIONS =
-        Stream.concat(
-                CLICK_EXCEPTIONS.stream(),
-                Stream.of(InvalidElementStateException.class))
-            .toList();
+        extend(CLICK_EXCEPTIONS, InvalidElementStateException.class);
+
+    @SafeVarargs
+    private static List<Class<? extends Throwable>> extend(
+            List<Class<? extends Throwable>> base, Class<? extends Throwable>... additional) {
+        return Stream.concat(base.stream(), Stream.of(additional)).toList();
+    }
 
     /**
      * Runs the given action under a {@link WebDriverWait} built from the current driver's
@@ -68,19 +65,14 @@ public class RetryAction {
      * @throws RuntimeException wrapping the {@link TimeoutException} if the action keeps throwing an ignored exception past the timeout
      */
     public static <T> T retry(Supplier<T> action, List<Class<? extends Throwable>> exceptionsToIgnore) {
-        AtomicReference<T> result = new AtomicReference<>();
         WebDriverWait wait = SeleniumWait.getWebDriverWait();
         wait.ignoreAll(exceptionsToIgnore);
 
         try {
-            wait.until(driver -> {
-                result.set(action.get());
-                return true;
-            });
+            return wait.until(driver -> action.get());
         } catch (TimeoutException e) {
             throw new RuntimeException("Timeout after " + DriverRunner.getConfig().getTimeout(), e);
         }
-        return result.get();
     }
 
     /**
@@ -94,7 +86,7 @@ public class RetryAction {
     public static void retry(Runnable action, List<Class<? extends Throwable>> exceptionsToIgnore) {
         retry(() -> {
             action.run();
-            return null;
+            return true;
         }, exceptionsToIgnore);
     }
 }
