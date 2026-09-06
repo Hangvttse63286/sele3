@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ExtentReportFactory implements IReportFactory {
-    private static final String OUTPUT_PATH = "target/reports/extent-reports/index.html";
+    private static final String OUTPUT_PATH = System.getProperty("extent.report.path", "target/reports/extent-reports/index.html");
     private static final ExtentReports extent = createExtentReports();
 
     private ExtentTest currentTest;

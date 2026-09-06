@@ -8,13 +8,12 @@ import lombok.Getter;
 public enum ReportType {
     ALLURE,
     EXTENT,
-    ALL,
     ;
 
     /**
      * Resolves a {@link ReportType} from its name, case-insensitively.
      *
-     * @param reportType the report type name (e.g. "allure", "Extent", "ALL")
+     * @param reportType the report type name (e.g. "allure", "Extent")
      * @return the matching {@link ReportType}
      * @throws IllegalArgumentException if no matching report type exists
      */

@@ -2,6 +2,7 @@ package com.sele3.reports;
 
 import org.openqa.selenium.OutputType;
 
+import com.sele3.configs.ConfigKey;
 import com.sele3.drivers.DriverRunner;
 
 import lombok.extern.slf4j.Slf4j;
@@ -9,19 +10,28 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ReportRunner {
     private static final ReportContainer reportContainer = new ReportContainer();
-    private static volatile ReportType lastReportType = ReportType.ALL;
 
     /**
-     * Binds a new {@link IReportFactory} built for {@code reportType} to the current thread and
-     * starts a test entry on it.
+     * Resolves which {@link ReportType} to use from the {@value ConfigKey#REPORT_TYPE} system
+     * property, defaulting to {@link ReportType#ALLURE} if it isn't set.
      *
-     * @param reportType which reporting backend(s) to use for this test
+     * @return the configured report backend
+     * @throws IllegalArgumentException if the property is set to a name that isn't a valid {@link ReportType}
+     */
+    public static ReportType getReportType() {
+        return ReportType.fromString(System.getProperty(ConfigKey.REPORT_TYPE, "ALLURE"));
+    }
+
+    /**
+     * Binds a new {@link IReportFactory} built for the configured {@link ReportType} (see
+     * {@link #getReportType()}) to the current thread and starts a test entry on it.
+     *
      * @param name the test's display name
      * @param description a longer description of what the test verifies, or {@code null} for none
      */
-    public static void startTest(ReportType reportType, String name, String description) {
+    public static void startTest(String name, String description) {
+        ReportType reportType = getReportType();
         log.info("Starting test: reportType={}, name={}, description={}", reportType, name, description);
-        lastReportType = reportType;
         reportContainer.initialize(reportType);
         getReportFactory().startTest(name, description);
     }
@@ -105,14 +115,15 @@ public class ReportRunner {
     }
 
     /**
-     * Writes/publishes the report for whichever {@link ReportType} was last passed to
-     * {@link #startTest}. Intended to be called once, at the end of a whole suite/run after all
-     * threads' tests have finished — deliberately independent of the per-thread
+     * Writes/publishes the report for the configured {@link ReportType} (see
+     * {@link #getReportType()}). Intended to be called once, at the end of a whole suite/run
+     * after all threads' tests have finished — deliberately independent of the per-thread
      * {@link IReportFactory} binding, since the calling (suite/launcher) thread will not itself
      * have called {@link #startTest}.
      */
     public static void flush() {
-        log.info("Flushing report for reportType={}", lastReportType);
-        ReportContainer.createReportFactory(lastReportType).flush();
+        ReportType reportType = getReportType();
+        log.info("Flushing report: reportType={}", reportType);
+        ReportContainer.createReportFactory(reportType).flush();
     }
 }

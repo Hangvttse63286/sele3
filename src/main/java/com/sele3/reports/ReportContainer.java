@@ -10,7 +10,7 @@ public class ReportContainer {
      * Creates an {@link IReportFactory} for the given {@link ReportType} and binds it to the
      * current thread.
      *
-     * @param reportType which reporting backend(s) to use
+     * @param reportType which reporting backend to use
      */
     public void initialize(ReportType reportType) {
         log.info("Initializing report factory: reportType={}", reportType);
@@ -26,7 +26,6 @@ public class ReportContainer {
         return switch (reportType) {
             case ALLURE -> new AllureReportFactory();
             case EXTENT -> new ExtentReportFactory();
-            case ALL -> new CompositeReportFactory(new AllureReportFactory(), new ExtentReportFactory());
         };
     }
 
