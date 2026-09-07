@@ -24,37 +24,29 @@ public class ReportContainer {
 
     /**
      * Creates an {@link IReportFactory} for {@code reportType} and binds it to the current
-     * thread. If the {@value ConfigKey#REPORT_TYPE} system property isn't already set, it's set
-     * to {@code reportType}'s name as a side effect, so later calls to {@link #getReportType()},
-     * {@link #initialize()}, and {@link #flush()} — which have no report type of their own to go
-     * on — resolve to whichever type was used first.
+     * thread, or clears any existing binding if {@code reportType} is {@code null} (no reporting
+     * for this run — see {@link #getReportFactory()}). If the {@value ConfigKey#REPORT_TYPE}
+     * system property isn't already set, it's set to {@code reportType}'s name as a side effect,
+     * so later calls to {@link #getReportType()}, {@link #initialize()}, and {@link #flush()} —
+     * which have no report type of their own to go on — resolve to whichever type was used first.
      *
-     * @param reportType which reporting backend to use; must not be {@code null}
-     * @throws IllegalArgumentException if {@code reportType} is {@code null}
+     * @param reportType which reporting backend to use, or {@code null} to disable reporting
      */
     public void initialize(IReportType reportType) {
+        System.setProperty(ConfigKey.REPORT_TYPE, reportType == null ? "" : reportType.name());
         if (reportType == null) {
-            throw new IllegalArgumentException("No report type specified");
-        }
-        if (getReportType() == null) {
-            System.setProperty(ConfigKey.REPORT_TYPE, reportType.name());
+            threadReportFactory.remove();
+            return;
         }
         log.info("Initializing report factory: reportType={}", reportType);
-        IReportFactory factory = createReportFactory(reportType);
-        threadReportFactory.set(factory);
+        threadReportFactory.set(createReportFactory(reportType));
     }
 
     /**
-     * {@link #initialize(IReportType)} using the type resolved by {@link #getReportType()}; logs
-     * a warning and does nothing if the {@value ConfigKey#REPORT_TYPE} system property isn't set.
+     * {@link #initialize(IReportType)} using the type resolved by {@link #getReportType()}.
      */
     public void initialize() {
-        IReportType reportType = getReportType();
-        if (reportType == null) {
-            log.warn("No report type specified via system property '{}'; skipping report factory initialization.", ConfigKey.REPORT_TYPE);
-            return;
-        }
-        initialize(reportType);
+        initialize(getReportType());
     }
 
     /**
@@ -82,13 +74,11 @@ public class ReportContainer {
     /**
      * Returns the {@link IReportFactory} bound to the current thread.
      *
-     * @return the current thread's {@link IReportFactory}
-     * @throws RuntimeException if no report factory has been bound via {@link #initialize(IReportType)}
+     * @return the current thread's {@link IReportFactory}, or {@code null} if
+     *         {@link #initialize(IReportType)} was never called on this thread, or was last
+     *         called with {@code null} (reporting disabled for this run)
      */
     public IReportFactory getReportFactory() {
-        if (threadReportFactory.get() == null) {
-            throw new RuntimeException("No report factory is bound to current thread. You need to initialize the report factory first.");
-        }
         return threadReportFactory.get();
     }
 
@@ -103,15 +93,18 @@ public class ReportContainer {
 
     /**
      * Builds a fresh {@link IReportFactory} for the type resolved by {@link #getReportType()} and
-     * flushes it. Unlike {@link #clear()}, this is safe to call from a thread other than the ones
-     * that ran tests (e.g. the suite/launcher thread at the very end of a run), since it never
-     * touches the thread-confined {@link ThreadLocal} — it relies only on the
-     * {@value ConfigKey#REPORT_TYPE} system property set by whichever thread called
-     * {@link #initialize(IReportType)} first.
-     *
-     * @throws IllegalArgumentException if the {@value ConfigKey#REPORT_TYPE} system property isn't set
+     * flushes it, or does nothing if no type is configured (reporting disabled for this run).
+     * Unlike {@link #clear()}, this is safe to call from a thread other than the ones that ran
+     * tests (e.g. the suite/launcher thread at the very end of a run), since it never touches the
+     * thread-confined {@link ThreadLocal} — it relies only on the {@value ConfigKey#REPORT_TYPE}
+     * system property set by whichever thread called {@link #initialize(IReportType)} first.
      */
     public void flush() {
-        createReportFactory(getReportType()).flush();
+        IReportType reportType = getReportType();
+        if (reportType == null) {
+            log.info("No report type configured; nothing to flush.");
+            return;
+        }
+        createReportFactory(reportType).flush();
     }
 }
