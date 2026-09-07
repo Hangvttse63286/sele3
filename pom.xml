@@ -80,10 +80,6 @@
                             <name>allure.results.directory</name>
                             <value>${project.build.directory}/reports/allure-reports</value>
                         </property>
-                        <property>
-                            <name>extent.report.path</name>
-                            <value>${project.build.directory}/reports/extent-reports/index.html</value>
-                        </property>
                     </systemProperties>
                     <suiteXmlFiles>
                         <!-- pass testng.xml files as argument from command line -->
