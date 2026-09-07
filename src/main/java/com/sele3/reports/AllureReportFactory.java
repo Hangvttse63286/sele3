@@ -6,11 +6,15 @@ import java.io.StringWriter;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Status;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AllureReportFactory implements IReportFactory {
+
+    @Override
+    public IReportType getReportType() {
+        return ReportType.ALLURE;
+    }
 
     @Override
     public void startTest(String name, String description) {

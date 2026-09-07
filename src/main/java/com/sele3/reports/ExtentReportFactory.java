@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.ServiceLoader;
 
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
@@ -17,13 +18,31 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ExtentReportFactory implements IReportFactory {
     private static final String OUTPUT_PATH = System.getProperty("extent.report.path", "target/reports/extent-reports/index.html");
-    private static final ExtentReports extent = createExtentReports();
 
     private ExtentTest currentTest;
 
+    /**
+     * Lazily creates the shared {@link ExtentReports} instance on first actual use (rather than a
+     * {@code static final} field), so merely constructing an {@link ExtentReportFactory} — e.g.
+     * when {@link ServiceLoader} instantiates it just to read {@link #getReportType()} — doesn't
+     * create the report output directory as a side effect.
+     */
+    private static final class ExtentHolder {
+        private static final ExtentReports INSTANCE = createExtentReports();
+    }
+
+    private static ExtentReports extent() {
+        return ExtentHolder.INSTANCE;
+    }
+
+    @Override
+    public IReportType getReportType() {
+        return ReportType.EXTENT;
+    }
+
     @Override
     public void startTest(String name, String description) {
-        this.currentTest = extent.createTest(name, description);
+        this.currentTest = extent().createTest(name, description);
     }
 
     @Override
@@ -72,7 +91,7 @@ public class ExtentReportFactory implements IReportFactory {
 
     @Override
     public void flush() {
-        extent.flush();
+        extent().flush();
     }
 
     private ExtentTest requireCurrentTest() {

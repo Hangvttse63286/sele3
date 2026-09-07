@@ -3,6 +3,13 @@ package com.sele3.reports;
 public interface IReportFactory {
 
     /**
+     * Returns the {@link IReportType} that this factory produces.
+     *
+     * @return the report type
+     */
+    IReportType getReportType();
+
+    /**
      * Starts a new test entry in the report, becoming the target of subsequent
      * {@link #log}/{@link #logException}/{@link #attachScreenshot}/{@link #attachText}/
      * {@link #step} calls until {@link #endTest()} is called.

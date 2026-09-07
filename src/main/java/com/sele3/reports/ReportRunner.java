@@ -2,7 +2,6 @@ package com.sele3.reports;
 
 import org.openqa.selenium.OutputType;
 
-import com.sele3.configs.ConfigKey;
 import com.sele3.drivers.DriverRunner;
 
 import lombok.extern.slf4j.Slf4j;
@@ -12,28 +11,31 @@ public class ReportRunner {
     private static final ReportContainer reportContainer = new ReportContainer();
 
     /**
-     * Resolves which {@link ReportType} to use from the {@value ConfigKey#REPORT_TYPE} system
-     * property, defaulting to {@link ReportType#ALLURE} if it isn't set.
+     * Binds a new {@link IReportFactory} built for {@code reportType} to the current thread and
+     * starts a test entry on it.
      *
-     * @return the configured report backend
-     * @throws IllegalArgumentException if the property is set to a name that isn't a valid {@link ReportType}
-     */
-    public static ReportType getReportType() {
-        return ReportType.fromString(System.getProperty(ConfigKey.REPORT_TYPE, "ALLURE"));
-    }
-
-    /**
-     * Binds a new {@link IReportFactory} built for the configured {@link ReportType} (see
-     * {@link #getReportType()}) to the current thread and starts a test entry on it.
-     *
+     * @param reportType which reporting backend to use for this test
      * @param name the test's display name
      * @param description a longer description of what the test verifies, or {@code null} for none
      */
-    public static void startTest(String name, String description) {
-        ReportType reportType = getReportType();
+    public static void startTest(IReportType reportType, String name, String description) {
         log.info("Starting test: reportType={}, name={}, description={}", reportType, name, description);
         reportContainer.initialize(reportType);
         getReportFactory().startTest(name, description);
+    }
+
+    /**
+     * {@link #startTest(IReportType, String, String)} using the report type resolved by
+     * {@link ReportContainer#getReportType()} (the {@value com.sele3.configs.ConfigKey#REPORT_TYPE}
+     * system property).
+     *
+     * @param name the test's display name
+     * @param description a longer description of what the test verifies, or {@code null} for none
+     * @throws IllegalArgumentException if no report type has been configured yet (see {@link #startTest(IReportType, String, String)})
+     */
+    public static void startTest(String name, String description) {
+        IReportType reportType = reportContainer.getReportType();
+        startTest(reportType, name, description);
     }
 
     /**
@@ -51,7 +53,7 @@ public class ReportRunner {
      * Returns the {@link IReportFactory} bound to the current thread.
      *
      * @return the current thread's {@link IReportFactory}
-     * @throws RuntimeException if {@link #startTest} has not been called on this thread
+     * @throws RuntimeException if {@link #startTest(IReportType, String, String)} has not been called on this thread
      */
     public static IReportFactory getReportFactory() {
         return reportContainer.getReportFactory();
@@ -115,15 +117,10 @@ public class ReportRunner {
     }
 
     /**
-     * Writes/publishes the report for the configured {@link ReportType} (see
-     * {@link #getReportType()}). Intended to be called once, at the end of a whole suite/run
-     * after all threads' tests have finished — deliberately independent of the per-thread
-     * {@link IReportFactory} binding, since the calling (suite/launcher) thread will not itself
-     * have called {@link #startTest}.
+     * @see ReportContainer#flush()
      */
     public static void flush() {
-        ReportType reportType = getReportType();
-        log.info("Flushing report: reportType={}", reportType);
-        ReportContainer.createReportFactory(reportType).flush();
+        log.info("Flushing report");
+        reportContainer.flush();
     }
 }
