@@ -25,17 +25,17 @@ public class AllureReportFactory implements IReportFactory {
     }
 
     @Override
-    public void endTest(ReportStatus status) {
+    public void endTest(IReportStatus status) {
         log.debug("Allure test lifecycle is managed by the listener; final status={}", status);
     }
 
     @Override
-    public void log(ReportStatus status, String message) {
+    public void log(IReportStatus status, String message) {
         Allure.step(message, toAllureStatus(status));
     }
 
     @Override
-    public void step(ReportStatus status, String stepName) {
+    public void step(IReportStatus status, String stepName) {
         Allure.step(stepName, toAllureStatus(status));
     }
 
@@ -70,12 +70,13 @@ public class AllureReportFactory implements IReportFactory {
      * of {@code INFO}/{@code WARNING}, so {@code INFO} maps to {@code PASSED} and {@code WARNING}
      * maps to {@code BROKEN} (closest match: worth attention but not an assertion failure).
      */
-    private static Status toAllureStatus(ReportStatus status) {
+    private static Status toAllureStatus(IReportStatus status) {
         return switch (status) {
-            case PASS, INFO -> Status.PASSED;
-            case FAIL -> Status.FAILED;
-            case SKIP -> Status.SKIPPED;
-            case WARNING -> Status.BROKEN;
+            case ReportStatus.PASS, ReportStatus.INFO -> Status.PASSED;
+            case ReportStatus.FAIL -> Status.FAILED;
+            case ReportStatus.SKIP -> Status.SKIPPED;
+            case ReportStatus.WARNING, ReportStatus.BROKEN -> Status.BROKEN;
+            default -> throw new IllegalArgumentException("Unknown ReportStatus: " + status);
         };
     }
 

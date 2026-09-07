@@ -49,7 +49,7 @@ public class ReportRunner {
      *
      * @param status the test's final status
      */
-    public static void endTest(ReportStatus status) {
+    public static void endTest(IReportStatus status) {
         IReportFactory factory = getReportFactory();
         if (factory != null) {
             log.info("Ending test: status={}", status);
@@ -69,9 +69,9 @@ public class ReportRunner {
     }
 
     /**
-     * @see IReportFactory#log(ReportStatus, String)
+     * @see IReportFactory#log(IReportStatus, String)
      */
-    public static void log(ReportStatus status, String message) {
+    public static void log(IReportStatus status, String message) {
         IReportFactory factory = getReportFactory();
         if (factory != null) {
             log.info("[LOG]: {}", message);
@@ -80,9 +80,9 @@ public class ReportRunner {
     }
 
     /**
-     * @see IReportFactory#step(ReportStatus, String)
+     * @see IReportFactory#step(IReportStatus, String)
      */
-    public static void step(ReportStatus status, String stepName) {
+    public static void step(IReportStatus status, String stepName) {
         IReportFactory factory = getReportFactory();
         if (factory != null) {
             log.info("[STEP]: {} - {}", stepName, status);

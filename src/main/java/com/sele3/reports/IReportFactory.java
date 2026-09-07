@@ -24,7 +24,7 @@ public interface IReportFactory {
      *
      * @param status the test's final status
      */
-    void endTest(ReportStatus status);
+    void endTest(IReportStatus status);
 
     /**
      * Logs a single message against the current test at the given status.
@@ -32,7 +32,7 @@ public interface IReportFactory {
      * @param status the log level to record the message at
      * @param message the message to record
      */
-    void log(ReportStatus status, String message);
+    void log(IReportStatus status, String message);
 
     /**
      * Records a named step against the current test at the given status, grouping any log
@@ -41,12 +41,12 @@ public interface IReportFactory {
      * @param status the step's outcome
      * @param stepName a short description of the step performed
      */
-    void step(ReportStatus status, String stepName);
+    void step(IReportStatus status, String stepName);
 
     /**
      * Runs {@code body} as a named step against the current test, recording it as
-     * {@link ReportStatus#PASS} if {@code body} returns normally, or as
-     * {@link ReportStatus#FAIL} (with the exception recorded) if it throws. The exception is
+     * {@link IReportStatus#PASS} if {@code body} returns normally, or as
+     * {@link IReportStatus#FAIL} (with the exception recorded) if it throws. The exception is
      * always rethrown after being recorded, so a failing step still fails the calling test.
      *
      * @param stepName a short description of the step performed

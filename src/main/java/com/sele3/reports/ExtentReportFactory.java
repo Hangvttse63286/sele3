@@ -46,18 +46,18 @@ public class ExtentReportFactory implements IReportFactory {
     }
 
     @Override
-    public void endTest(ReportStatus status) {
+    public void endTest(IReportStatus status) {
         requireCurrentTest().log(toExtentStatus(status), "Test finished with status: " + status);
         this.currentTest = null;
     }
 
     @Override
-    public void log(ReportStatus status, String message) {
+    public void log(IReportStatus status, String message) {
         requireCurrentTest().log(toExtentStatus(status), message);
     }
 
     @Override
-    public void step(ReportStatus status, String stepName) {
+    public void step(IReportStatus status, String stepName) {
         requireCurrentTest().createNode(stepName).log(toExtentStatus(status), stepName);
     }
 
@@ -106,13 +106,14 @@ public class ExtentReportFactory implements IReportFactory {
      * ({@code PASS}/{@code FAIL}/{@code SKIP}/{@code INFO}/{@code WARNING}), so this is a
      * one-to-one mapping rather than an approximation.
      */
-    private static Status toExtentStatus(ReportStatus status) {
+    private static Status toExtentStatus(IReportStatus status) {
         return switch (status) {
-            case PASS -> Status.PASS;
-            case FAIL -> Status.FAIL;
-            case SKIP -> Status.SKIP;
-            case INFO -> Status.INFO;
-            case WARNING -> Status.WARNING;
+            case ReportStatus.PASS -> Status.PASS;
+            case ReportStatus.FAIL -> Status.FAIL;
+            case ReportStatus.SKIP -> Status.SKIP;
+            case ReportStatus.INFO -> Status.INFO;
+            case ReportStatus.WARNING, ReportStatus.BROKEN -> Status.WARNING;
+            default -> throw new IllegalArgumentException("Unknown ReportStatus: " + status);
         };
     }
 
