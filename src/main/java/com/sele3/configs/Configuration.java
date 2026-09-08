@@ -25,6 +25,8 @@ public class Configuration {
     private Duration pollingInterval;
     private String baseUrl;
     private String windowSize;
+    private Duration retryTimeout;
+    private Duration retryInterval;
 
     /**
      * Initiate Configuration
@@ -44,6 +46,8 @@ public class Configuration {
             setPollingInterval(Duration.ofMillis(Long.parseLong(System.getProperty(ConfigKey.POLLING_INTERVAL, "500"))));
             setBaseUrl(System.getProperty(ConfigKey.BASE_URL, "http://localhost:8080"));
             setWindowSize(System.getProperty(ConfigKey.WINDOW_SIZE, "1920,1080"));
+            setRetryTimeout(Duration.ofMillis(Long.parseLong(System.getProperty(ConfigKey.RETRY_TIMEOUT, "60000"))));
+            setRetryInterval(Duration.ofMillis(Long.parseLong(System.getProperty(ConfigKey.RETRY_INTERVAL, "500"))));
         }
     }
 

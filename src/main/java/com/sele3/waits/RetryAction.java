@@ -65,13 +65,13 @@ public class RetryAction {
      * @throws RuntimeException wrapping the {@link TimeoutException} if the action keeps throwing an ignored exception past the timeout
      */
     public static <T> T retry(Supplier<T> action, List<Class<? extends Throwable>> exceptionsToIgnore) {
-        WebDriverWait wait = SeleniumWait.getWebDriverWait();
+        WebDriverWait wait = SeleniumWait.getWebDriverWait(DriverRunner.getConfig().getRetryTimeout(), DriverRunner.getConfig().getRetryInterval());
         wait.ignoreAll(exceptionsToIgnore);
 
         try {
             return wait.until(driver -> action.get());
         } catch (TimeoutException e) {
-            throw new RuntimeException("Timeout after " + DriverRunner.getConfig().getTimeout(), e);
+            throw new RuntimeException("Timeout after " + DriverRunner.getConfig().getRetryTimeout(), e);
         }
     }
 
@@ -88,5 +88,12 @@ public class RetryAction {
             action.run();
             return true;
         }, exceptionsToIgnore);
+    }
+
+    public static <T> T readyCheck(T result) {
+        if (result == null || Boolean.FALSE.equals(result)) {
+            throw new NoSuchElementException("Condition not yet satisfied for locator");
+        }
+        return result;
     }
 }

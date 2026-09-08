@@ -250,7 +250,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForDisabled(BaseElement element, Duration timeout) {
-        executeWait(timeout, driver -> !driver.findElement(element.getLocator()).isEnabled());
+        executeWait(timeout, driver -> !element.getRawElement().isEnabled());
     }
 
     /**
@@ -272,7 +272,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForValueEquals(BaseElement element, String value, Duration timeout) {
-        executeWait(timeout, driver -> element.getElement().getAttribute("value").equals(value));
+        waitForAttributeEquals(element, "value", value, timeout);
     }
 
     /**
@@ -283,7 +283,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForValueNotEquals(BaseElement element, String value, Duration timeout) {
-        executeWait(timeout, driver -> !element.getElement().getAttribute("value").equals(value));
+        waitForAttributeNotEquals(element, "value", value, timeout);
     }
 
     /**
@@ -294,7 +294,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForValueContains(BaseElement element, String value, Duration timeout) {
-        executeWait(timeout, driver -> element.getElement().getAttribute("value").contains(value));
+        waitForAttributeContains(element, "value", value, timeout);
     }
 
     /**
@@ -305,7 +305,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForTextEquals(BaseElement element, String text, Duration timeout) {
-        executeWait(timeout, driver -> element.getElement().getText().equals(text));
+        executeWait(timeout, ExpectedConditions.textToBe(element.getLocator(), text));
     }
 
     /**
@@ -316,7 +316,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForTextNotEquals(BaseElement element, String text, Duration timeout) {
-        executeWait(timeout, driver -> !element.getElement().getText().equals(text));
+        executeWait(timeout, ExpectedConditions.not(ExpectedConditions.textToBe(element.getLocator(), text)));
     }
 
     /**
@@ -339,7 +339,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForAttributeEquals(BaseElement element, String attribute, String value, Duration timeout) {
-        executeWait(timeout, driver -> element.getElement().getAttribute(attribute).equals(value));
+        executeWait(timeout, ExpectedConditions.attributeToBe(element.getLocator(), attribute, value));
     }
 
     /**
@@ -351,7 +351,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForAttributeNotEquals(BaseElement element, String attribute, String value, Duration timeout) {
-        executeWait(timeout, driver -> !element.getElement().getAttribute(attribute).equals(value));
+        executeWait(timeout, ExpectedConditions.not(ExpectedConditions.attributeToBe(element.getLocator(), attribute, value)));
     }
 
     /**
@@ -384,7 +384,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForChecked(BaseElement element, Duration timeout) {
-        executeWait(timeout, driver -> element.getElement().isSelected());
+        executeWait(timeout, ExpectedConditions.elementToBeSelected(element.getLocator()));
     }
 
     /**
@@ -394,7 +394,7 @@ public class SeleniumWait {
      * @param timeout the maximum time to wait
      */
     public static void waitForUnchecked(BaseElement element, Duration timeout) {
-        executeWait(timeout, driver -> !element.getElement().isSelected());
+        executeWait(timeout, ExpectedConditions.not(ExpectedConditions.elementToBeSelected(element.getLocator())));
     }
 
     /**
