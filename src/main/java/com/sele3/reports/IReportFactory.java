@@ -64,10 +64,12 @@ public interface IReportFactory {
     /**
      * Attaches a screenshot to the current test.
      *
-     * @param screenshot the screenshot bytes (e.g. PNG, as returned by {@code TakesScreenshot})
+     * @param screenshotBase64 the screenshot as a base64-encoded PNG (Selenium's native
+     *        {@code TakesScreenshot} wire format, e.g. via {@code OutputType.BASE64} — no
+     *        decode/encode round-trip needed to obtain it)
      * @param name a label for the attachment
      */
-    void attachScreenshot(byte[] screenshot, String name);
+    void attachScreenshot(String screenshotBase64, String name);
 
     /**
      * Attaches arbitrary text content (e.g. page source, a JSON payload, driver logs) to the

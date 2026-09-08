@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Base64;
 import java.util.ServiceLoader;
 
 import com.aventstack.extentreports.ExtentReports;
@@ -79,8 +78,8 @@ public class ExtentReportFactory implements IReportFactory {
     }
 
     @Override
-    public void attachScreenshot(byte[] screenshot, String name) {
-        requireCurrentTest().addScreenCaptureFromBase64String(Base64.getEncoder().encodeToString(screenshot), name);
+    public void attachScreenshot(String screenshotBase64, String name) {
+        requireCurrentTest().addScreenCaptureFromBase64String(screenshotBase64, name);
     }
 
     @Override

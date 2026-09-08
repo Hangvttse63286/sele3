@@ -1,5 +1,7 @@
 package com.sele3.reports;
 
+import java.util.Optional;
+
 import org.openqa.selenium.OutputType;
 
 import com.sele3.drivers.DriverRunner;
@@ -28,7 +30,7 @@ public class ReportRunner {
             return;
         }
         log.info("Starting test: reportType={}, name={}, description={}", reportType, name, description);
-        getReportFactory().startTest(name, description);
+        getReportFactory().orElseThrow().startTest(name, description);
     }
 
     /**
@@ -50,90 +52,84 @@ public class ReportRunner {
      * @param status the test's final status
      */
     public static void endTest(IReportStatus status) {
-        IReportFactory factory = getReportFactory();
-        if (factory != null) {
-            log.info("Ending test: status={}", status);
+        log.info("Ending test: status={}", status);
+        getReportFactory().ifPresent(factory -> {
             factory.endTest(status);
-        }
+        });
         reportContainer.clear();
     }
 
     /**
      * Returns the {@link IReportFactory} bound to the current thread.
      *
-     * @return the current thread's {@link IReportFactory}, or {@code null} if reporting is
-     *         disabled for this run (see {@link #startTest(IReportType, String, String)})
+     * @return the current thread's {@link IReportFactory}, or empty if reporting is disabled for
+     *         this run (see {@link #startTest(IReportType, String, String)})
      */
-    public static IReportFactory getReportFactory() {
-        return reportContainer.getReportFactory();
+    public static Optional<IReportFactory> getReportFactory() {
+        return Optional.ofNullable(reportContainer.getReportFactory());
     }
 
     /**
      * @see IReportFactory#log(IReportStatus, String)
      */
     public static void log(IReportStatus status, String message) {
-        IReportFactory factory = getReportFactory();
-        if (factory != null) {
-            log.info("[LOG]: {}", message);
+        log.info("[LOG]: {}", message);
+        getReportFactory().ifPresent(factory -> {
             factory.log(status, message);
-        }
+        });
     }
 
     /**
      * @see IReportFactory#step(IReportStatus, String)
      */
     public static void step(IReportStatus status, String stepName) {
-        IReportFactory factory = getReportFactory();
-        if (factory != null) {
-            log.info("[STEP]: {} - {}", stepName, status);
+        log.info("[STEP]: {} - {}", stepName, status);
+        getReportFactory().ifPresent(factory -> {
             factory.step(status, stepName);
-        }
+        });
     }
 
     /**
      * @see IReportFactory#step(String, Runnable)
      */
     public static void step(String stepName, Runnable body) {
-        IReportFactory factory = getReportFactory();
-        if (factory == null) {
+        log.info("[STEP]: {}", stepName);
+        Optional<IReportFactory> factory = getReportFactory();
+        if (factory.isEmpty()) {
             body.run();
             return;
         }
-        log.info("[STEP]: {}", stepName);
-        factory.step(stepName, body);
+        factory.get().step(stepName, body);
     }
 
     /**
      * @see IReportFactory#logException(Throwable)
      */
     public static void logException(Throwable throwable) {
-        IReportFactory factory = getReportFactory();
-        if (factory != null) {
-            log.error("[EXCEPTION]: {}", throwable.getMessage(), throwable);
+        log.error("[EXCEPTION]: {}", throwable.getMessage(), throwable);
+        getReportFactory().ifPresent(factory -> {
             factory.logException(throwable);
-        }
+        });
     }
 
     /**
-     * @see IReportFactory#attachScreenshot(byte[], String)
+     * @see IReportFactory#attachScreenshot(String, String)
      */
-    public static void attachScreenshot(byte[] screenshot, String name) {
-        IReportFactory factory = getReportFactory();
-        if (factory != null) {
-            log.info("[ATTACHMENT-SCREENSHOT]: {}", name);
-            factory.attachScreenshot(screenshot, name);
-        }
+    public static void attachScreenshot(String screenshotBase64, String name) {
+        log.info("[ATTACHMENT-SCREENSHOT]: {}", name);
+        getReportFactory().ifPresent(factory -> {
+            factory.attachScreenshot(screenshotBase64, name);
+        });
     }
 
     /**
      * @see IReportFactory#attachText(String, String)
      */
     public static void attachText(String name, String content) {
-        IReportFactory factory = getReportFactory();
-        if (factory != null) {
-            log.info("[ATTACHMENT-TEXT]: {}", name);
+        log.info("[ATTACHMENT-TEXT]: {}", name);
+        getReportFactory().ifPresent(factory -> {
             factory.attachText(name, content);
-        }
+        });
     }
 
     /**
@@ -143,8 +139,8 @@ public class ReportRunner {
      * @param name a label for the attachment
      */
     public static void attachScreenshot(String name) {
-        if (getReportFactory() != null) {
-            attachScreenshot(DriverRunner.takeScreenShot(OutputType.BYTES), name);
+        if (getReportFactory().isPresent()) {
+            attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), name);
         }
     }
 

@@ -3,6 +3,7 @@ package com.sele3.reports;
 import java.io.ByteArrayInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Base64;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Status;
@@ -51,8 +52,8 @@ public class AllureReportFactory implements IReportFactory {
     }
 
     @Override
-    public void attachScreenshot(byte[] screenshot, String name) {
-        Allure.addAttachment(name, "image/png", new ByteArrayInputStream(screenshot), ".png");
+    public void attachScreenshot(String screenshotBase64, String name) {
+        Allure.addAttachment(name, "image/png", new ByteArrayInputStream(Base64.getDecoder().decode(screenshotBase64)), ".png");
     }
 
     @Override
