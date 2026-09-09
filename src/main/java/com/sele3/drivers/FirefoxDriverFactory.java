@@ -4,24 +4,30 @@ import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.remote.AbstractDriverOptions;
 
 import com.sele3.configs.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class FirefoxDriverFactory implements IDriverFactory<FirefoxOptions> {
+public class FirefoxDriverFactory implements IDriverFactory {
+
+    @Override
+    public IPlatform getPlatform() {
+        return Platform.FIREFOX;
+    }
 
     /**
      * Creates a {@link FirefoxDriver} instance. Selenium Manager resolves and downloads a
      * matching geckodriver binary automatically.
      *
-     * @param options the driver options
+     * @param options the driver options, always a {@link FirefoxOptions} from this same factory's {@link #getOptions(Configuration)}
      * @return the created {@link FirefoxDriver}
      */
     @Override
-    public WebDriver createDriver(FirefoxOptions options) {
-        return new FirefoxDriver(options);
+    public WebDriver createDriver(AbstractDriverOptions<?> options) {
+        return new FirefoxDriver((FirefoxOptions) options);
     }
 
     /**

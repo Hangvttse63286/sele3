@@ -4,25 +4,31 @@ import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
+import org.openqa.selenium.remote.AbstractDriverOptions;
 
 import com.sele3.configs.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class EdgeDriverFactory implements IDriverFactory<EdgeOptions> {
+public class EdgeDriverFactory implements IDriverFactory {
+
+    @Override
+    public IPlatform getPlatform() {
+        return Platform.EDGE;
+    }
 
     /**
      * Creates an {@link EdgeDriver} instance. Selenium Manager resolves and downloads a
      * matching msedgedriver binary automatically.
      *
-     * @param options the driver options
+     * @param options the driver options, always an {@link EdgeOptions} from this same factory's {@link #getOptions(Configuration)}
      * @return the created {@link EdgeDriver}
      */
     @Override
-    public WebDriver createDriver(EdgeOptions options) {
+    public WebDriver createDriver(AbstractDriverOptions<?> options) {
         log.debug("Edge options: {}", options);
-        return new EdgeDriver(options);
+        return new EdgeDriver((EdgeOptions) options);
     }
 
     /**

@@ -4,24 +4,30 @@ import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.AbstractDriverOptions;
 
 import com.sele3.configs.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ChromeDriverFactory implements IDriverFactory<ChromeOptions> {
+public class ChromeDriverFactory implements IDriverFactory {
+
+    @Override
+    public IPlatform getPlatform() {
+        return Platform.CHROME;
+    }
 
     /**
      * Creates a {@link ChromeDriver} instance. Selenium Manager resolves and downloads a
      * matching chromedriver binary automatically.
      *
-     * @param options the driver options
+     * @param options the driver options, always a {@link ChromeOptions} from this same factory's {@link #getOptions(Configuration)}
      * @return the created {@link ChromeDriver}
      */
     @Override
-    public WebDriver createDriver(ChromeOptions options) {
-        return new ChromeDriver(options);
+    public WebDriver createDriver(AbstractDriverOptions<?> options) {
+        return new ChromeDriver((ChromeOptions) options);
     }
 
     /**

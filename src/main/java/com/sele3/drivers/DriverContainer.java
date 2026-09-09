@@ -37,6 +37,16 @@ public class DriverContainer {
     }
 
     /**
+     * Checks whether a {@link Driver} is bound to the current thread, without throwing if not —
+     * unlike {@link #getDriver()}, which requires one to already be bound.
+     *
+     * @return {@code true} if {@link #initialize(Configuration)} has been called on this thread
+     */
+    public boolean hasDriver() {
+        return threadDriver.get() != null;
+    }
+
+    /**
      * Quits the current thread's underlying WebDriver, if one was created, and removes the
      * thread-local binding regardless of whether quitting succeeds.
      *
