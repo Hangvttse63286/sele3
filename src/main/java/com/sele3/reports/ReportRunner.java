@@ -1,6 +1,7 @@
 package com.sele3.reports;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.openqa.selenium.OutputType;
 
@@ -53,9 +54,7 @@ public class ReportRunner {
      */
     public static void endTest(IReportStatus status) {
         log.info("Ending test: status={}", status);
-        getReportFactory().ifPresent(factory -> {
-            factory.endTest(status);
-        });
+        ifReporting(factory -> factory.endTest(status));
         reportContainer.clear();
     }
 
@@ -70,13 +69,19 @@ public class ReportRunner {
     }
 
     /**
+     * Runs {@code action} against the current thread's {@link IReportFactory}, or does nothing
+     * if reporting is disabled for this run.
+     */
+    private static void ifReporting(Consumer<IReportFactory> action) {
+        getReportFactory().ifPresent(action);
+    }
+
+    /**
      * @see IReportFactory#log(IReportStatus, String)
      */
     public static void log(IReportStatus status, String message) {
         log.info("[LOG]: {}", message);
-        getReportFactory().ifPresent(factory -> {
-            factory.log(status, message);
-        });
+        ifReporting(factory -> factory.log(status, message));
     }
 
     /**
@@ -84,9 +89,7 @@ public class ReportRunner {
      */
     public static void step(IReportStatus status, String stepName) {
         log.info("[STEP]: {} - {}", stepName, status);
-        getReportFactory().ifPresent(factory -> {
-            factory.step(status, stepName);
-        });
+        ifReporting(factory -> factory.step(status, stepName));
     }
 
     /**
@@ -94,12 +97,7 @@ public class ReportRunner {
      */
     public static void step(String stepName, Runnable body) {
         log.info("[STEP]: {}", stepName);
-        Optional<IReportFactory> factory = getReportFactory();
-        if (factory.isEmpty()) {
-            body.run();
-            return;
-        }
-        factory.get().step(stepName, body);
+        getReportFactory().ifPresentOrElse(factory -> factory.step(stepName, body), body);
     }
 
     /**
@@ -107,9 +105,7 @@ public class ReportRunner {
      */
     public static void logException(Throwable throwable) {
         log.error("[EXCEPTION]: {}", throwable.getMessage(), throwable);
-        getReportFactory().ifPresent(factory -> {
-            factory.logException(throwable);
-        });
+        ifReporting(factory -> factory.logException(throwable));
     }
 
     /**
@@ -117,9 +113,7 @@ public class ReportRunner {
      */
     public static void attachScreenshot(String screenshotBase64, String name) {
         log.info("[ATTACHMENT-SCREENSHOT]: {}", name);
-        getReportFactory().ifPresent(factory -> {
-            factory.attachScreenshot(screenshotBase64, name);
-        });
+        ifReporting(factory -> factory.attachScreenshot(screenshotBase64, name));
     }
 
     /**
@@ -127,9 +121,7 @@ public class ReportRunner {
      */
     public static void attachText(String name, String content) {
         log.info("[ATTACHMENT-TEXT]: {}", name);
-        getReportFactory().ifPresent(factory -> {
-            factory.attachText(name, content);
-        });
+        ifReporting(factory -> factory.attachText(name, content));
     }
 
     /**
@@ -139,9 +131,7 @@ public class ReportRunner {
      * @param name a label for the attachment
      */
     public static void attachScreenshot(String name) {
-        if (getReportFactory().isPresent()) {
-            attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), name);
-        }
+        ifReporting(factory -> attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), name));
     }
 
     /**
