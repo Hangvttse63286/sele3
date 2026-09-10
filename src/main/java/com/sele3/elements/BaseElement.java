@@ -10,10 +10,12 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 
 import com.sele3.drivers.DriverRunner;
+import com.sele3.waits.ElementWait;
 import com.sele3.waits.RetryAction;
-import com.sele3.waits.SeleniumWait;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,6 +30,14 @@ public class BaseElement {
     protected By locator;
     /** The XPath template this element was constructed with, e.g. {@code "//div[@id='%s']"}; {@code null} for a fixed locator. */
     protected String dynamicXPathLocator;
+    /**
+     * Lazily-created by {@link #waits()} and cached here; excluded from
+     * {@code equals}/{@code hashCode}/{@code toString} since it holds a back-reference to this
+     * element ({@link ElementWait#getElement()}), which would otherwise recurse infinitely.
+     */
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    protected ElementWait wait;
 
     /**
      * Creates a BaseElement from a fixed {@link By} locator.
@@ -48,30 +58,12 @@ public class BaseElement {
     }
 
     /**
-     * Waits for this element to exist in the DOM, then returns it.
-     *
-     * @return the underlying {@link WebElement}
-     */
-    public WebElement getElement() {
-        return SeleniumWait.waitForExist(this);
-    }
-
-    /**
      * returns the underlying {@link WebElement} without waiting for it to exist in the DOM.
      *
      * @return the underlying {@link WebElement}
      */
-    public WebElement getRawElement() {
+    protected WebElement findElement() {
         return ExpectedConditions.presenceOfElementLocated(this.locator).apply(DriverRunner.getWebDriver());
-    }
-
-    /**
-     * Waits for this element to exist in the DOM and be interactable, then returns it.
-     *
-     * @return the underlying {@link WebElement}
-     */
-    public WebElement getInteractableElement() {
-        return SeleniumWait.waitForClickable(this);
     }
 
     /**
@@ -79,17 +71,8 @@ public class BaseElement {
      *
      * @return the underlying {@link WebElement}
      */
-    public WebElement getRawInteractableElement() {
+    protected WebElement findInteractableElement() {
         return ExpectedConditions.elementToBeClickable(this.locator).apply(DriverRunner.getWebDriver());
-    }
-
-    /**
-     * Waits for this element to exist in the DOM, then returns all matching elements.
-     *
-     * @return all matching {@link WebElement}s
-     */
-    public List<WebElement> getElements() {
-        return SeleniumWait.waitForAllExist(this);
     }
 
     /**
@@ -97,7 +80,7 @@ public class BaseElement {
      *
      * @return all matching {@link WebElement}s
      */
-    public List<WebElement> getRawElements() {
+    protected List<WebElement> findElements() {
         return ExpectedConditions.presenceOfAllElementsLocatedBy(this.locator).apply(DriverRunner.getWebDriver());
     }
 
@@ -118,7 +101,7 @@ public class BaseElement {
      * @return the attribute's value, or {@code null} if not present
      */
     public String getAttribute(String attribute) {
-        return RetryAction.retry(() -> RetryAction.readyCheck(getRawElement()).getAttribute(attribute), RetryAction.COMMON_EXCEPTIONS);
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).getAttribute(attribute), RetryAction.COMMON_EXCEPTIONS);
     }
 
     /**
@@ -127,7 +110,7 @@ public class BaseElement {
      * @return the element's visible text
      */
     public String getText() {
-        return RetryAction.retry(() -> RetryAction.readyCheck(getRawElement()).getText(), RetryAction.COMMON_EXCEPTIONS);
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).getText(), RetryAction.COMMON_EXCEPTIONS);
     }
 
     /**
@@ -155,7 +138,7 @@ public class BaseElement {
      * @return the computed CSS value
      */
     public String getCssValue(String name) {
-        return RetryAction.retry(() -> RetryAction.readyCheck(getRawElement()).getCssValue(name), RetryAction.COMMON_EXCEPTIONS);
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).getCssValue(name), RetryAction.COMMON_EXCEPTIONS);
     }
 
     /**
@@ -165,7 +148,7 @@ public class BaseElement {
      * @return the computed CSS value for each matching element, in DOM order
      */
     public List<String> getAllCssValues(String name) {
-        return RetryAction.retry(() -> RetryAction.readyCheck(getRawElements()).stream().map(e -> RetryAction.readyCheck(e).getCssValue(name)).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS);
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElements()).stream().map(e -> RetryAction.readyCheck(e).getCssValue(name)).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS);
     }
 
     /**
@@ -174,7 +157,7 @@ public class BaseElement {
      * @return the visible text of each matching element, in DOM order
      */
     public List<String> getAllTexts() {
-        return RetryAction.retry(() -> RetryAction.readyCheck(getRawElements()).stream().map(e -> RetryAction.readyCheck(e).getText()).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS);
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElements()).stream().map(e -> RetryAction.readyCheck(e).getText()).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS);
     }
 
     /**
@@ -182,14 +165,14 @@ public class BaseElement {
      */
     public void scrollToView() {
         RetryAction.retry(() -> {
-            scrollToView(RetryAction.readyCheck(getRawElement()));
+            scrollToView(RetryAction.readyCheck(findElement()));
         }, RetryAction.COMMON_EXCEPTIONS);
     }
 
     /**
      * Scrolls the element into view, aligning it to the top of the viewport.
      */
-    public void scrollToView(WebElement element) {
+    protected void scrollToView(WebElement element) {
         DriverRunner.executeJS("arguments[0].scrollIntoView(true);", element);
         
     }
@@ -199,7 +182,7 @@ public class BaseElement {
      */
     public void click() {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             element.click();
         }, RetryAction.CLICK_EXCEPTIONS);
@@ -210,7 +193,7 @@ public class BaseElement {
      */
     public void rightClick() {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             new Actions(DriverRunner.getWebDriver()).contextClick(element).perform();
         }, RetryAction.CLICK_EXCEPTIONS);
@@ -221,7 +204,7 @@ public class BaseElement {
      */
     public void doubleClick() {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             new Actions(DriverRunner.getWebDriver()).doubleClick(element).perform();
         }, RetryAction.CLICK_EXCEPTIONS);
@@ -232,7 +215,7 @@ public class BaseElement {
      */
     public void hover() {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawElement());
+            WebElement element = RetryAction.readyCheck(findElement());
             scrollToCenter(element);
             new Actions(DriverRunner.getWebDriver()).moveToElement(element).perform();
         }, RetryAction.COMMON_EXCEPTIONS);
@@ -245,7 +228,7 @@ public class BaseElement {
      */
     public void clearAndEnter(CharSequence... values) {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             element.clear();
             element.sendKeys(values);
@@ -259,7 +242,7 @@ public class BaseElement {
      */
     public void enter(CharSequence... values) {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             element.sendKeys(values);
         }, RetryAction.SEND_KEYS_EXCEPTIONS);
@@ -272,8 +255,7 @@ public class BaseElement {
      */
     public void select(String option) {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
-            scrollToCenter(element);
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             select.selectByVisibleText(option);
         }, RetryAction.CLICK_EXCEPTIONS);
@@ -286,8 +268,7 @@ public class BaseElement {
      */
     public void selectByValue(String value) {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
-            scrollToCenter(element);
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             select.selectByValue(value);
         }, RetryAction.CLICK_EXCEPTIONS);
@@ -300,8 +281,7 @@ public class BaseElement {
      */
     public void selectByIndex(int index) {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
-            scrollToCenter(element);
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             select.selectByIndex(index);
         }, RetryAction.CLICK_EXCEPTIONS);
@@ -314,8 +294,7 @@ public class BaseElement {
      */
     public String getSelectedOption() {
         return RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
-            scrollToCenter(element);
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             return select.getFirstSelectedOption().getText();
         }, RetryAction.CLICK_EXCEPTIONS);
@@ -328,7 +307,7 @@ public class BaseElement {
      */
     public List<String> getAllSelectedOptions() {
         return RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             return select.getOptions().stream().map(e -> RetryAction.readyCheck(e).getText()).collect(Collectors.toList());
         }, RetryAction.COMMON_EXCEPTIONS);
@@ -341,7 +320,7 @@ public class BaseElement {
      */
     public void clickViaJS() {
         RetryAction.retry(() -> {
-            WebElement element = RetryAction.readyCheck(getRawInteractableElement());
+            WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             DriverRunner.executeJS("arguments[0].click();", element);
         }, RetryAction.CLICK_EXCEPTIONS);
@@ -352,14 +331,38 @@ public class BaseElement {
      */
     public void scrollToCenter() {
         RetryAction.retry(() -> {
-            scrollToCenter(RetryAction.readyCheck(getRawElement()));
+            scrollToCenter(RetryAction.readyCheck(findElement()));
         }, RetryAction.COMMON_EXCEPTIONS);
     }
 
     /**
      * Scrolls the element into the center of the viewport, both vertically and horizontally.
      */
-    public void scrollToCenter(WebElement element) {
+    protected void scrollToCenter(WebElement element) {
         DriverRunner.executeJS("arguments[0].scrollIntoView({block: \"center\", inline: \"center\"});", element);
+    }
+
+    /**
+     * Returns this element's {@link ElementWait}, creating it on first use.
+     *
+     * @return this element's {@link ElementWait}
+     */
+    public ElementWait waits() {
+        if (this.wait == null) {
+            this.wait = new ElementWait(this);
+        }
+        return this.wait;
+    }
+
+    /**
+     * Checks whether this element is currently enabled, without waiting or retrying. Deliberately
+     * not wrapped in {@link RetryAction#retry}, unlike most other accessors here, so it stays
+     * cheap enough to call on every poll of an outer wait (e.g. {@link ElementWait#untilDisabled()}
+     * uses it as its condition) without stacking a full nested retry timeout onto each poll.
+     *
+     * @return {@code true} if the element is enabled
+     */
+    public boolean isEnabled() {
+        return findElement().isEnabled();
     }
 }

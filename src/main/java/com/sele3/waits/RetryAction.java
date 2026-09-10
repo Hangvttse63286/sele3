@@ -65,13 +65,12 @@ public class RetryAction {
      * @throws RuntimeException wrapping the {@link TimeoutException} if the action keeps throwing an ignored exception past the timeout
      */
     public static <T> T retry(Supplier<T> action, List<Class<? extends Throwable>> exceptionsToIgnore) {
-        WebDriverWait wait = SeleniumWait.getWebDriverWait(DriverRunner.getConfig().getRetryTimeout(), DriverRunner.getConfig().getRetryInterval());
-        wait.ignoreAll(exceptionsToIgnore);
-
+        SeleniumWait wait = new SeleniumWait();
+        wait.ignore(exceptionsToIgnore);
         try {
             return wait.until(driver -> action.get());
         } catch (TimeoutException e) {
-            throw new RuntimeException("Timeout after " + DriverRunner.getConfig().getRetryTimeout(), e);
+            throw new RuntimeException("Timeout after " + DriverRunner.getConfig().getTimeout(), e);
         }
     }
 
@@ -90,6 +89,16 @@ public class RetryAction {
         }, exceptionsToIgnore);
     }
 
+    /**
+     * Throws if {@code result} indicates the checked condition isn't satisfied yet ({@code null}
+     * or {@code false}), so a caller inside {@link #retry} can trigger a retry by simply calling
+     * this instead of writing its own null/false check.
+     *
+     * @param result the value to check
+     * @param <T> the type of {@code result}
+     * @return {@code result}, unchanged, if it isn't {@code null} or {@code false}
+     * @throws NoSuchElementException if {@code result} is {@code null} or {@code false}
+     */
     public static <T> T readyCheck(T result) {
         if (result == null || Boolean.FALSE.equals(result)) {
             throw new NoSuchElementException("Condition not yet satisfied for locator");
