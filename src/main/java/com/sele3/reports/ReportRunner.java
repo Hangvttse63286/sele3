@@ -133,12 +133,4 @@ public class ReportRunner {
     public static void attachScreenshot(String name) {
         ifReporting(factory -> attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), name));
     }
-
-    /**
-     * @see ReportContainer#flush()
-     */
-    public static void flush() {
-        log.info("Flushing report");
-        reportContainer.flush();
-    }
 }

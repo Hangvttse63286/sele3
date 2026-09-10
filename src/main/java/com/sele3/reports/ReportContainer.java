@@ -27,8 +27,8 @@ public class ReportContainer {
      * thread, or clears any existing binding if {@code reportType} is {@code null} (no reporting
      * for this run — see {@link #getReportFactory()}). If the {@value ConfigKey#REPORT_TYPE}
      * system property isn't already set, it's set to {@code reportType}'s name as a side effect,
-     * so later calls to {@link #getReportType()}, {@link #initialize()}, and {@link #flush()} —
-     * which have no report type of their own to go on — resolve to whichever type was used first.
+     * so later calls to {@link #getReportType()} and {@link #initialize()} — which have no report
+     * type of their own to go on — resolve to whichever type was used first.
      *
      * @param reportType which reporting backend to use, or {@code null} to disable reporting
      */
@@ -83,28 +83,18 @@ public class ReportContainer {
     }
 
     /**
-     * Removes the report factory binding for the current thread. {@link ThreadLocal} only ever
-     * lets a thread clear its own entry, so this must be called from the same thread that called
-     * {@link #initialize}, e.g. from {@link ReportRunner#endTest}.
+     * Flushes and removes the report factory binding for the current thread, or does nothing if
+     * reporting is disabled for this run (no factory bound). {@link ThreadLocal} only ever lets a
+     * thread clear its own entry, so this must be called from the same thread that called
+     * {@link #initialize}, e.g. from {@link ReportRunner#endTest} — which is also why flushing
+     * happens here per-test rather than once at the end of a suite: each test's own worker thread
+     * flushes its own factory, so no cross-thread access to another thread's binding is needed.
      */
     public void clear() {
-        threadReportFactory.remove();
-    }
-
-    /**
-     * Builds a fresh {@link IReportFactory} for the type resolved by {@link #getReportType()} and
-     * flushes it, or does nothing if no type is configured (reporting disabled for this run).
-     * Unlike {@link #clear()}, this is safe to call from a thread other than the ones that ran
-     * tests (e.g. the suite/launcher thread at the very end of a run), since it never touches the
-     * thread-confined {@link ThreadLocal} — it relies only on the {@value ConfigKey#REPORT_TYPE}
-     * system property set by whichever thread called {@link #initialize(IReportType)} first.
-     */
-    public void flush() {
-        IReportType reportType = getReportType();
-        if (reportType == null) {
-            log.info("No report type configured; nothing to flush.");
-            return;
+        IReportFactory factory = getReportFactory();
+        if (factory != null) {
+            factory.flush();
         }
-        createReportFactory(reportType).flush();
+        threadReportFactory.remove();
     }
 }
