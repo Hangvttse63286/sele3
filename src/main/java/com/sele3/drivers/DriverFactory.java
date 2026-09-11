@@ -50,7 +50,7 @@ public class DriverFactory {
      *
      * @throws IllegalArgumentException if no registered {@link IDriverFactory} matches {@code platform}
      */
-    private static IDriverFactory findDriverFactory(IPlatform platform) {
+    private static IDriverFactory<?> findDriverFactory(IPlatform platform) {
         return ServiceLoader.load(IDriverFactory.class)
             .stream()
             .map(ServiceLoader.Provider::get)
@@ -63,15 +63,19 @@ public class DriverFactory {
     }
 
     /**
-     * Builds the driver-specific options and creates the {@link WebDriver}.
+     * Builds the driver-specific options and creates the {@link WebDriver}. Generic over the
+     * factory's own options type {@code T} (rather than taking {@code IDriverFactory<?>}
+     * directly) so that the {@code options} built by {@link IDriverFactory#getOptions} can be
+     * passed straight into that same factory's {@link IDriverFactory#createDriver} with no cast —
+     * the compiler ties both calls to the same captured {@code T} for this one invocation.
      *
      * @param driverFactory the browser-specific factory to use
      * @param config the test run configuration
      * @return the created {@link WebDriver}
      * @throws RuntimeException if {@code config.getRemoteUrl()} is not a valid URL
      */
-    private static WebDriver createWebDriver(IDriverFactory driverFactory, Configuration config) {
-        AbstractDriverOptions<?> options = driverFactory.getOptions(config);
+    private static <T extends AbstractDriverOptions<?>> WebDriver createWebDriver(IDriverFactory<T> driverFactory, Configuration config) {
+        T options = driverFactory.getOptions(config);
 
         if (config.isRemote()) {
             try {

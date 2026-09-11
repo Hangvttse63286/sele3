@@ -63,8 +63,8 @@ public class Configuration {
         setRemoteUrl(resolveString(ConfigKey.REMOTE_URL, remoteUrl, "http://localhost:4444/wd/hub"));
         setStartMaximized(resolveBoolean(ConfigKey.START_MAXIMIZED, startMaximized));
         setPageLoadStrategy(resolveString(ConfigKey.PAGE_LOAD_STRATEGY, pageLoadStrategy, "normal"));
-        setTimeout(resolveDuration(ConfigKey.TIMEOUT, timeout, 60000));
-        setPollingInterval(resolveDuration(ConfigKey.POLLING_INTERVAL, pollingInterval, 500));
+        setTimeout(resolveDuration(ConfigKey.TIMEOUT, timeout, Duration.ofMillis(60000)));
+        setPollingInterval(resolveDuration(ConfigKey.POLLING_INTERVAL, pollingInterval, Duration.ofMillis(500)));
         setBaseUrl(resolveString(ConfigKey.BASE_URL, baseUrl, "http://localhost:8080"));
         setWindowSize(resolveString(ConfigKey.WINDOW_SIZE, windowSize, "1920,1080"));
     }
@@ -84,13 +84,13 @@ public class Configuration {
         return systemProperty != null ? Boolean.parseBoolean(systemProperty) : currentValue;
     }
 
-    /** Resolves a {@link Duration} field: the {@code key} system property (millis) if set, else {@code currentValue}, else {@code hardcodedDefaultMillis}. */
-    private static Duration resolveDuration(String key, Duration currentValue, long hardcodedDefaultMillis) {
+    /** Resolves a {@link Duration} field: the {@code key} system property (millis) if set, else {@code currentValue}, else {@code hardcodedDefault}. */
+    private static Duration resolveDuration(String key, Duration currentValue, Duration hardcodedDefault) {
         String systemProperty = System.getProperty(key);
         if (systemProperty != null) {
             return Duration.ofMillis(Long.parseLong(systemProperty));
         }
-        return currentValue != null ? currentValue : Duration.ofMillis(hardcodedDefaultMillis);
+        return currentValue != null ? currentValue : hardcodedDefault;
     }
 
     /** Resolves {@link #capabilities}: the {@value ConfigKey#CAPABILITIES} system property if set, else the current value, else empty. */

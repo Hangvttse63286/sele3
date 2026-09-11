@@ -4,14 +4,13 @@ import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
-import org.openqa.selenium.remote.AbstractDriverOptions;
 
 import com.sele3.configs.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class EdgeDriverFactory implements IDriverFactory {
+public class EdgeDriverFactory implements IDriverFactory<EdgeOptions> {
 
     @Override
     public IPlatform getPlatform() {
@@ -22,13 +21,13 @@ public class EdgeDriverFactory implements IDriverFactory {
      * Creates an {@link EdgeDriver} instance. Selenium Manager resolves and downloads a
      * matching msedgedriver binary automatically.
      *
-     * @param options the driver options, always an {@link EdgeOptions} from this same factory's {@link #getOptions(Configuration)}
+     * @param options the driver options, from this same factory's {@link #getOptions(Configuration)}
      * @return the created {@link EdgeDriver}
      */
     @Override
-    public WebDriver createDriver(AbstractDriverOptions<?> options) {
+    public WebDriver createDriver(EdgeOptions options) {
         log.debug("Edge options: {}", options);
-        return new EdgeDriver((EdgeOptions) options);
+        return new EdgeDriver(options);
     }
 
     /**
