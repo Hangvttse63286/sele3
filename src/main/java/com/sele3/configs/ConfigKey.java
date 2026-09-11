@@ -12,6 +12,4 @@ public class ConfigKey {
     public static final String POLLING_INTERVAL = "pollingInterval";
     public static final String BASE_URL = "baseUrl";
     public static final String WINDOW_SIZE = "windowSize";
-    public static final String RETRY_TIMEOUT = "retryTimeout";
-    public static final String RETRY_INTERVAL = "retryInterval";
 }
