@@ -55,7 +55,7 @@ public class Configuration {
      * loading a config file pointless — every field it set would be immediately clobbered by
      * whichever default happened to apply.
      */
-    public void updateFromSystemProperties() {
+    public final void updateFromSystemProperties() {
         setCapabilities(resolveCapabilities());
         setHeadless(resolveBoolean(ConfigKey.HEADLESS, headless));
         setPlatform(resolvePlatform());
