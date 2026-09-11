@@ -7,8 +7,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import com.sele3.elements.BaseElement;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -17,8 +16,7 @@ import lombok.extern.slf4j.Slf4j;
  * etc.). See {@link BaseElement#waits()} for the usual way to obtain one.
  */
 @Slf4j
-@Data
-@EqualsAndHashCode(callSuper = false)
+@Getter
 public class ElementWait extends SeleniumWait {
     private BaseElement element;
 
@@ -92,7 +90,7 @@ public class ElementWait extends SeleniumWait {
      * Waits until the given element is disabled.
      */
     public void untilDisabled() {
-        until(driver -> !getElement().isEnabled());
+        until(driver -> getElement().isDisabled());
     }
 
     /**

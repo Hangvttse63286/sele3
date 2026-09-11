@@ -14,7 +14,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.sele3.drivers.DriverRunner;
 import com.sele3.elements.BaseElement;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  * call's own full timeout budget on top of the outer one rather than sharing a deadline with it.
  */
 @Slf4j
-@Data
+@Getter
 public class SeleniumWait {
     protected WebDriverWait wait;
 

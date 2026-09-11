@@ -32,8 +32,11 @@ public class BaseElement {
     protected String dynamicXPathLocator;
     /**
      * Lazily-created by {@link #waits()} and cached here; excluded from
-     * {@code equals}/{@code hashCode}/{@code toString} since it holds a back-reference to this
-     * element ({@link ElementWait#getElement()}), which would otherwise recurse infinitely.
+     * {@code equals}/{@code hashCode}/{@code toString} as an internal cache rather than part of
+     * this element's identity, and to avoid ever depending on {@link ElementWait} gaining its own
+     * generated {@code equals}/{@code hashCode}/{@code toString} again — it holds a back-reference
+     * to this element ({@link ElementWait#getElement()}), which would recurse infinitely if both
+     * sides generated those methods.
      */
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
@@ -355,14 +358,20 @@ public class BaseElement {
     }
 
     /**
-     * Checks whether this element is currently enabled, without waiting or retrying. Deliberately
-     * not wrapped in {@link RetryAction#retry}, unlike most other accessors here, so it stays
-     * cheap enough to call on every poll of an outer wait (e.g. {@link ElementWait#untilDisabled()}
-     * uses it as its condition) without stacking a full nested retry timeout onto each poll.
+     * Checks whether this element is currently enabled.
      *
      * @return {@code true} if the element is enabled
      */
     public boolean isEnabled() {
-        return findElement().isEnabled();
+        return RetryAction.retry(() -> findElement().isEnabled(), RetryAction.COMMON_EXCEPTIONS);
+    }
+
+     /**
+     * Checks whether this element is currently disabled.
+     *
+     * @return {@code true} if the element is disabled
+     */
+    public boolean isDisabled() {
+        return RetryAction.retry(() -> !findElement().isEnabled(), RetryAction.COMMON_EXCEPTIONS);
     }
 }
