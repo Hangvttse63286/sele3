@@ -7,6 +7,7 @@ import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.json.Json;
 
 import com.sele3.drivers.IPlatform;
+import com.sele3.drivers.Platform;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -108,6 +109,6 @@ public class Configuration {
         if (systemProperty != null) {
             return IPlatform.fromString(systemProperty);
         }
-        return platform != null ? platform : IPlatform.fromString("chrome");
+        return platform != null ? platform : Platform.CHROME;
     }
 }

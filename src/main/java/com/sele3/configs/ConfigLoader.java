@@ -10,6 +10,9 @@ import org.openqa.selenium.MutableCapabilities;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
+import com.sele3.adapters.CapabilitiesAdapter;
+import com.sele3.adapters.DurationAdapter;
+import com.sele3.adapters.PlatformAdapter;
 import com.sele3.drivers.IPlatform;
 
 import lombok.extern.slf4j.Slf4j;

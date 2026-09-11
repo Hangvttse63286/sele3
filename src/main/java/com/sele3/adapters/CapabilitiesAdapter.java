@@ -1,4 +1,4 @@
-package com.sele3.configs;
+package com.sele3.adapters;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.sele3.configs.Configuration;
 
 /**
  * Gson type adapter for {@link MutableCapabilities}. Gson's default reflective (de)serialization

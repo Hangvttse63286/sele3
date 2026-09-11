@@ -1,4 +1,4 @@
-package com.sele3.configs;
+package com.sele3.adapters;
 
 import java.lang.reflect.Type;
 import java.time.Duration;
