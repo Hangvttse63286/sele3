@@ -1,6 +1,5 @@
 package com.sele3.drivers;
 
-import java.util.List;
 import java.util.ServiceLoader;
 
 public interface IPlatform {
@@ -36,22 +35,5 @@ public interface IPlatform {
                 "Unknown platform: " + name + ". Add a META-INF/services/"
                     + IDriverFactory.class.getName()
                     + " entry for an IDriverFactory implementation whose getPlatform().name() matches it."));
-    }
-
-    /**
-     * Lists every registered {@link IPlatform} — predefined ({@link Platform#CHROME},
-     * {@link Platform#FIREFOX}, {@link Platform#EDGE}) and any added later — by the same
-     * {@link IDriverFactory} discovery {@link #fromString} uses, so a platform registered purely
-     * via its own {@link IDriverFactory} appears here too with no change to this class.
-     *
-     * @return every registered platform, in no particular order, with no duplicates
-     */
-    static List<IPlatform> values() {
-        return ServiceLoader.load(IDriverFactory.class)
-            .stream()
-            .map(ServiceLoader.Provider::get)
-            .map(IDriverFactory::getPlatform)
-            .distinct()
-            .toList();
     }
 }

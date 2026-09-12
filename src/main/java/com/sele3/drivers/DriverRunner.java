@@ -30,7 +30,7 @@ public class DriverRunner {
     public static void initDriver(Configuration config) {
         driverContainer.initialize(config);
 
-        if (config.getPlatform() == Platform.FIREFOX && config.isStartMaximized() && !config.isHeadless()) {
+        if (Platform.FIREFOX.name().equalsIgnoreCase(config.getPlatform().name()) && config.isStartMaximized() && !config.isHeadless()) {
             getWebDriver().manage().window().maximize();
         }
     }

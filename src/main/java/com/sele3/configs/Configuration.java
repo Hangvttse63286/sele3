@@ -2,6 +2,7 @@ package com.sele3.configs;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.json.Json;
@@ -76,7 +77,7 @@ public class Configuration {
         if (systemProperty != null) {
             return systemProperty;
         }
-        return currentValue != null ? currentValue : hardcodedDefault;
+        return Objects.requireNonNullElse(currentValue, hardcodedDefault);
     }
 
     /** Resolves a {@code boolean} field: the {@code key} system property if set, else {@code currentValue} unchanged. */
@@ -91,7 +92,7 @@ public class Configuration {
         if (systemProperty != null) {
             return Duration.ofMillis(Long.parseLong(systemProperty));
         }
-        return currentValue != null ? currentValue : hardcodedDefault;
+        return Objects.requireNonNullElse(currentValue, hardcodedDefault);
     }
 
     /** Resolves {@link #capabilities}: the {@value ConfigKey#CAPABILITIES} system property if set, else the current value, else empty. */
@@ -100,7 +101,7 @@ public class Configuration {
         if (systemProperty != null) {
             return parseCapabilities(systemProperty);
         }
-        return capabilities != null ? capabilities : new MutableCapabilities();
+        return Objects.requireNonNullElseGet(capabilities, MutableCapabilities::new);
     }
 
     /** Resolves {@link #platform}: the {@value ConfigKey#PLATFORM} system property if set, else the current value, else {@code "chrome"}. */
@@ -109,6 +110,6 @@ public class Configuration {
         if (systemProperty != null) {
             return IPlatform.fromString(systemProperty);
         }
-        return platform != null ? platform : Platform.CHROME;
+        return Objects.requireNonNullElse(platform, Platform.CHROME);
     }
 }

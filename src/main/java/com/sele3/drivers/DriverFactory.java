@@ -54,7 +54,7 @@ public class DriverFactory {
         return ServiceLoader.load(IDriverFactory.class)
             .stream()
             .map(ServiceLoader.Provider::get)
-            .filter(factory -> platform.equals(factory.getPlatform()))
+            .filter(factory -> platform.name().equalsIgnoreCase(factory.getPlatform().name()))
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException(
                 "Unsupported platform: " + platform + ". Add a META-INF/services/"

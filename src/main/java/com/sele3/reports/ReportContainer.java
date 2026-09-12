@@ -63,7 +63,7 @@ public class ReportContainer {
         return ServiceLoader.load(IReportFactory.class)
             .stream()
             .map(ServiceLoader.Provider::get)
-            .filter(factory -> reportType.equals(factory.getReportType()))
+            .filter(factory -> reportType.name().equalsIgnoreCase(factory.getReportType().name()))
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException(
                 "Unsupported report type: " + reportType + ". Add a META-INF/services/"
