@@ -10,6 +10,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
+import com.sele3.configs.ConfigLoader;
 import com.sele3.configs.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class DriverRunner {
     public static void initDriver(Configuration config) {
         driverContainer.initialize(config);
 
-        if (config.getPlatform() == Platform.FIREFOX && config.isStartMaximized() && !config.isHeadless()) {
+        if (Platform.FIREFOX.name().equalsIgnoreCase(config.getPlatform().name()) && config.isStartMaximized() && !config.isHeadless()) {
             getWebDriver().manage().window().maximize();
         }
     }
@@ -68,6 +69,9 @@ public class DriverRunner {
      * @see #open(String)
      */
     public static void open() {
+        if (!driverContainer.hasDriver()) {
+            initDriver(ConfigLoader.loadConfig());
+        }
         open(getConfig().getBaseUrl());
     }
 

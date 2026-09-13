@@ -12,11 +12,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FirefoxDriverFactory implements IDriverFactory<FirefoxOptions> {
 
+    @Override
+    public IPlatform getPlatform() {
+        return Platform.FIREFOX;
+    }
+
     /**
      * Creates a {@link FirefoxDriver} instance. Selenium Manager resolves and downloads a
      * matching geckodriver binary automatically.
      *
-     * @param options the driver options
+     * @param options the driver options, from this same factory's {@link #getOptions(Configuration)}
      * @return the created {@link FirefoxDriver}
      */
     @Override

@@ -12,11 +12,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ChromeDriverFactory implements IDriverFactory<ChromeOptions> {
 
+    @Override
+    public IPlatform getPlatform() {
+        return Platform.CHROME;
+    }
+
     /**
      * Creates a {@link ChromeDriver} instance. Selenium Manager resolves and downloads a
      * matching chromedriver binary automatically.
      *
-     * @param options the driver options
+     * @param options the driver options, from this same factory's {@link #getOptions(Configuration)}
      * @return the created {@link ChromeDriver}
      */
     @Override
