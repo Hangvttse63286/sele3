@@ -1,0 +1,22 @@
+{
+  "platform": "chrome",
+  "headless": false,
+  "windowSize": "1920,1080",
+  "pageLoadStrategy": "normal",
+  "startMaximized": true,
+  "timeout": 60000,
+  "pollingInterval": 500,
+  "baseUrl": "http://localhost:8080",
+  "remoteUrl": "http://localhost:4444/wd/hub",
+  "remote": false,
+  "capabilities": {
+    "acceptInsecureCerts": true,
+    "goog:chromeOptions": {
+      "args": [
+        "--disable-gpu",
+        "--no-sandbox",
+        "--disable-dev-shm-usage"
+      ]
+    }
+  }
+}
