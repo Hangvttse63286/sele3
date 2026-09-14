@@ -21,29 +21,20 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Base class for page-object elements: wraps a {@link By} locator (fixed or resolved from a
  * dynamic XPath template) and exposes wait-aware accessors/actions on it, retrying via
- * {@link RetryAction} on transient Selenium exceptions rather than failing on the first flake.
+ * {@link RetryAction} on transient Selenium exceptions rather than failing on the first
+ * transient failure. The current-thread WebDriver must be initialized before invoking methods
+ * that access the browser, including {@link #waits()}.
  */
 @Slf4j
 @Data
 public class BaseElement {
-    /** The locator currently used to find this element; set directly or resolved via {@link #set(Object...)}. */
+    /** The locator currently used to find this element; resolved via {@link #set(Object...)} for dynamic elements. */
     protected By locator;
-    /** The XPath template this element was constructed with, e.g. {@code "//div[@id='%s']"}; {@code null} for a fixed locator. */
+    /** The XPath template used by dynamic elements, e.g. {@code "//div[@id='%s']"}; {@code null} for fixed locators. */
     protected String dynamicXPathLocator;
-    /**
-     * Lazily-created by {@link #waits()} and cached here; excluded from
-     * {@code equals}/{@code hashCode}/{@code toString} as an internal cache rather than part of
-     * this element's identity, and to avoid ever depending on {@link ElementWait} gaining its own
-     * generated {@code equals}/{@code hashCode}/{@code toString} again — it holds a back-reference
-     * to this element ({@link ElementWait#getElement()}), which would recurse infinitely if both
-     * sides generated those methods.
-     */
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    protected ElementWait wait;
 
     /**
-     * Creates a BaseElement from a fixed {@link By} locator.
+    * Creates a {@code BaseElement} from a fixed {@link By} locator.
      *
      * @param locator the locator used to find this element
      */
@@ -52,7 +43,8 @@ public class BaseElement {
     }
 
     /**
-     * Creates a BaseElement from a dynamic XPath template, to be resolved later via {@link #set(Object...)}.
+    * Creates a {@code BaseElement} from a dynamic XPath template. Call {@link #set(Object...)}
+    * before using this element to resolve the template into a locator.
      *
      * @param dynamicXPathLocator an XPath template, e.g. {@code "//div[@id='%s']"}
      */
@@ -61,7 +53,8 @@ public class BaseElement {
     }
 
     /**
-     * returns the underlying {@link WebElement} without waiting for it to exist in the DOM.
+    * Returns the first matching {@link WebElement} if it is present in the DOM.
+    * This method performs a single presence check and does not poll until the element appears.
      *
      * @return the underlying {@link WebElement}
      */
@@ -70,7 +63,8 @@ public class BaseElement {
     }
 
     /**
-     * returns the underlying {@link WebElement} without waiting for it to exist in the DOM and be interactable.
+    * Returns the first matching {@link WebElement} if it is present and clickable.
+    * This method performs a single clickability check and does not poll until the element becomes clickable.
      *
      * @return the underlying {@link WebElement}
      */
@@ -79,7 +73,8 @@ public class BaseElement {
     }
 
     /**
-     * returns all matching {@link WebElement}s without waiting for them to exist in the DOM.
+    * Returns all matching {@link WebElement}s if they are present in the DOM.
+    * This method performs a single presence check and does not poll until the elements appear.
      *
      * @return all matching {@link WebElement}s
      */
@@ -88,8 +83,9 @@ public class BaseElement {
     }
 
     /**
-     * Resolves this element's dynamic XPath template by substituting the given arguments,
-     * replacing the current locator.
+    * Resolves this element's dynamic XPath template by substituting the given arguments and
+    * replacing the current locator. This method is intended for elements created with
+    * {@link #BaseElement(String)}.
      *
      * @param args the values to substitute into the XPath template
      */
@@ -346,15 +342,14 @@ public class BaseElement {
     }
 
     /**
-     * Returns this element's {@link ElementWait}, creating it on first use.
+    * Creates and returns an {@link ElementWait} bound to this element and the current driver.
+    * A new wait is created on each call, so the wait uses the driver and configuration active
+    * when the method is invoked.
      *
      * @return this element's {@link ElementWait}
      */
     public ElementWait waits() {
-        if (this.wait == null) {
-            this.wait = new ElementWait(this);
-        }
-        return this.wait;
+        return new ElementWait(this);
     }
 
     /**

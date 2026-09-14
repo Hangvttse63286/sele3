@@ -16,6 +16,13 @@ import com.sele3.drivers.DriverRunner;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Retry helpers for transient Selenium failures during element interactions.
+ *
+ * <p>The predefined exception lists can be passed to {@link #retry(Supplier, List)} or
+ * {@link #retry(Runnable, List)} to express which failures should be retried. Actions should
+ * locate elements inside the supplied callback so each retry uses the current DOM node.</p>
+ */
 @Slf4j
 public class RetryAction {
 
@@ -66,7 +73,7 @@ public class RetryAction {
      */
     public static <T> T retry(Supplier<T> action, List<Class<? extends Throwable>> exceptionsToIgnore) {
         SeleniumWait wait = new SeleniumWait();
-        wait.ignore(exceptionsToIgnore);
+        wait.ignoreAll(exceptionsToIgnore);
         try {
             return wait.until(driver -> action.get());
         } catch (TimeoutException e) {

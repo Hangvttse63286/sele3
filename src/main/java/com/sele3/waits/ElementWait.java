@@ -2,7 +2,6 @@ package com.sele3.waits;
 
 import java.time.Duration;
 
-import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import com.sele3.elements.BaseElement;
@@ -185,11 +184,13 @@ public class ElementWait extends SeleniumWait {
     }
 
     /**
-     * Waits until the {@code <select>} element matching the locator has its {@code <option>}
-     * children populated.
+     * Waits until the element matching this wait's locator contains an element matching the
+     * child locator.
+     *
+     * @param childElement the child element whose presence is required
      */
-    public void untilSelectOptionsLoaded() {
-        until(ExpectedConditions.presenceOfNestedElementsLocatedBy(getElement().getLocator(), By.tagName("option")));
+    public void untilChildrenExist(BaseElement childElement) {
+        until(ExpectedConditions.presenceOfNestedElementsLocatedBy(getElement().getLocator(), childElement.getLocator()));
     }
 
     /**

@@ -1,12 +1,8 @@
 package com.sele3.waits;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -14,29 +10,27 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.sele3.drivers.DriverRunner;
 import com.sele3.elements.BaseElement;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Element-independent {@link WebDriverWait} helpers (page load, jQuery activity, current URL,
  * arbitrary conditions) built around the current driver's configured timeout and polling
  * interval. See {@link ElementWait} for the element-bound counterparts (visibility, text,
- * attributes, etc.). Each {@code waitFor*} call uses this instance's own {@link #wait}, so
- * nesting one of these inside another wait or a {@link RetryAction#retry} action adds that
- * call's own full timeout budget on top of the outer one rather than sharing a deadline with it.
+ * attributes, etc.). Each wait method uses this instance's own {@link #wait}, so nesting one
+ * of these inside another wait or a {@link RetryAction#retry} action adds that call's own full
+ * timeout budget on top of the outer one rather than sharing a deadline with it.
  */
 @Slf4j
-@Getter
-public class SeleniumWait {
-    protected WebDriverWait wait;
+public class SeleniumWait extends WebDriverWait{
 
     /**
      * Creates a {@link SeleniumWait} with no bound {@link BaseElement}, using the current
      * driver's configured timeout and polling interval. Only the element-independent waits
-     * (e.g. {@link #waitFor}, {@link #pageToLoad}) can be used until an element is set.
+    * (e.g. {@link #untilPageToLoad}, {@link #untilUrlContains}) can be used until an element
+    * is set.
      */
     public SeleniumWait() {
-        this.wait = createWebDriverWait(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval());
+        super(DriverRunner.getWebDriver(), DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval());
     }
 
     /**
@@ -47,80 +41,7 @@ public class SeleniumWait {
      * @param pollingInterval how often to re-evaluate the condition while waiting
      */
     public SeleniumWait(Duration timeout, Duration pollingInterval) {
-        this.wait = createWebDriverWait(timeout, pollingInterval);
-    }
-     
-    /**
-     * Builds a {@link WebDriverWait} using the current driver's configured timeout and polling
-     * interval.
-     *
-     * @return a new {@link WebDriverWait}
-     */
-    private WebDriverWait createWebDriverWait(Duration timeout, Duration pollingInterval) {
-        return new WebDriverWait(DriverRunner.getWebDriver(), timeout, pollingInterval);
-    }
-
-    /**
-     * Adds exception types that {@link #wait} should ignore (retry through) while polling,
-     * in addition to the {@link org.openqa.selenium.TimeoutException} it always propagates.
-     *
-     * @param exceptions the exception types to ignore while polling
-     */
-    public void ignore(List<Class<? extends Throwable>> exceptions) {
-        this.wait.ignoreAll(exceptions);
-    }
-
-    /**
-     * Changes the timeout used by subsequent waits on this instance's {@link #wait}.
-     *
-     * @param timeout the new maximum time to wait
-     */
-    public void setTimeout(Duration timeout) {
-        this.wait.withTimeout(timeout);
-    }
-
-    /**
-     * Changes the polling interval used by subsequent waits on this instance's {@link #wait}.
-     *
-     * @param pollingInterval the new interval between condition re-evaluations
-     */
-    public void setPollingInterval(Duration pollingInterval) {
-        this.wait.pollingEvery(pollingInterval);
-    }
-
-    /**
-     * {@link #setTimeout(Duration)} and {@link #setPollingInterval(Duration)} together.
-     *
-     * @param timeout the new maximum time to wait
-     * @param pollingInterval the new interval between condition re-evaluations
-     */
-    public void setTimeoutAndInterval(Duration timeout, Duration pollingInterval) {
-        setTimeout(timeout);
-        setPollingInterval(pollingInterval);
-    }
-
-    /**
-     * Waits, using the default timeout/polling interval, until the given condition returns a
-     * non-null/non-false result.
-     *
-     * @param condition the condition to evaluate against the {@link WebDriver}
-     * @param <T> the result type of the condition
-     * @return the result produced by {@code condition} once satisfied
-     */
-    public <T> T until(Function<WebDriver, T> condition) {
-        return getWait().until(condition);
-    }
-
-    /**
-     * {@link Supplier} variant of {@link #until(Function)}, for a condition that doesn't need
-     * the {@link WebDriver}.
-     *
-     * @param action the condition to evaluate
-     * @param <T> the result type of the condition
-     * @return the result produced by {@code action} once satisfied
-     */
-    public <T> T until(Supplier<T> action) {
-        return getWait().until(driver -> action.get());
+        super(DriverRunner.getWebDriver(), timeout, pollingInterval);
     }
 
     /**
