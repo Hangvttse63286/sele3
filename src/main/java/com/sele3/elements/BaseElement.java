@@ -189,4 +189,11 @@ public interface BaseElement {
      * @return {@code true} if the element is disabled
      */
     boolean isDisabled();
+
+    /**
+     * Gets the number of matching elements in the DOM. This is equivalent to {@code findElements().size()}.
+     * 
+     * @return the number of matching elements
+     */
+    int getSize();
 }
