@@ -206,4 +206,22 @@ public class ElementWait extends SeleniumWait {
     public void untilUnchecked() {
         until(ExpectedConditions.not(ExpectedConditions.elementToBeSelected(getElement().getLocator())));
     }
+
+    /**
+     * Waits until the number of elements matching the locator equals the given count.
+     *
+     * @param expectedCount the expected number of elements
+     */
+    public void untilElementsAreExactly(int expectedCount) {
+        until(driver -> getElement().getSize() == expectedCount);
+    }
+
+    /**
+     * Waits until the number of elements matching the locator is at least the given count.
+     *
+     * @param expectedCount the minimum expected number of elements
+     */
+    public void untilElementsAreAtLeast(int expectedCount) {
+        until(driver -> getElement().getSize() >= expectedCount);
+    }
 }
