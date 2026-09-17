@@ -77,7 +77,7 @@ public class Element implements BaseElement {
      * @return all matching {@link WebElement}s
      */
     protected List<WebElement> findElements() {
-        return ExpectedConditions.presenceOfAllElementsLocatedBy(this.locator).apply(DriverRunner.getWebDriver());
+        return DriverRunner.getWebDriver().findElements(this.locator);
     }
 
     /**
@@ -155,7 +155,7 @@ public class Element implements BaseElement {
      */
     @Override
     public List<String> getAllCssValues(String name) {
-        return RetryAction.retry(() -> RetryAction.readyCheck(findElements()).stream().map(e -> e.getCssValue(name)).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS,
+        return RetryAction.retry(() -> findElements().stream().map(e -> e.getCssValue(name)).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS,
             () -> "get CSS value '" + name + "' of all elements " + locator);
     }
 
@@ -166,7 +166,7 @@ public class Element implements BaseElement {
      */
     @Override
     public List<String> getAllTexts() {
-        return RetryAction.retry(() -> RetryAction.readyCheck(findElements()).stream().map(e -> e.getText()).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS,
+        return RetryAction.retry(() -> findElements().stream().map(e -> e.getText()).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS,
             () -> "get text of all elements " + locator);
     }
 
@@ -401,13 +401,12 @@ public class Element implements BaseElement {
     }
 
     /**
-     * Gets the number of matching elements in the DOM. This is equivalent to {@code findElements().size()}.
+     * Gets the number of matching elements in the DOM.
      * 
      * @return the number of matching elements
      */
     @Override
     public int getSize() {
-        return RetryAction.retry(() -> RetryAction.readyCheck(findElements()).size(), RetryAction.COMMON_EXCEPTIONS,
-            () -> "get size of elements " + locator);
+        return findElements().size();
     }
 }
