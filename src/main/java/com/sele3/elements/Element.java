@@ -422,6 +422,7 @@ public class Element implements BaseElement {
      *
      * @return {@code true} if the element is selected
      */
+    @Override
     public boolean isSelected() {
         return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).isSelected(), RetryableExceptions.COMMON_EXCEPTIONS,
             () -> "check if element " + locator + " is selected");
