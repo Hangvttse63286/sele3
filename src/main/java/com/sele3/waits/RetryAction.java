@@ -1,14 +1,10 @@
 package com.sele3.waits;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
-import org.openqa.selenium.ElementClickInterceptedException;
-import org.openqa.selenium.ElementNotInteractableException;
-import org.openqa.selenium.InvalidElementStateException;
 import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -19,44 +15,13 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Retry helpers for transient Selenium failures during element interactions.
  *
- * <p>The predefined exception lists can be passed to {@link #retry(Supplier, List)} or
- * {@link #retry(Runnable, List)} to express which failures should be retried. Actions should
- * locate elements inside the supplied callback so each retry uses the current DOM node.</p>
+ * <p>{@link RetryableExceptions} provides exception lists that can be passed to
+ * {@link #retry(Supplier, List)} or {@link #retry(Runnable, List)} to express which failures
+ * should be retried. Actions should locate elements inside the supplied callback so each retry
+ * uses the current DOM node.</p>
  */
 @Slf4j
 public class RetryAction {
-
-    /**
-     * Transient failures common to any element lookup: the DOM node was replaced between
-     * locating the element and acting on it ({@link StaleElementReferenceException}), or the
-     * element hasn't appeared in the DOM yet ({@link NoSuchElementException}).
-     */
-    public static final List<Class<? extends Throwable>> COMMON_EXCEPTIONS =
-        List.of(
-            StaleElementReferenceException.class,
-            NoSuchElementException.class);
-
-    /**
-     * {@link #COMMON_EXCEPTIONS} plus failures specific to clicking: the element is covered by
-     * another element ({@link ElementClickInterceptedException}) or isn't in an interactable
-     * state yet ({@link ElementNotInteractableException}). Used for click/select-style actions.
-     */
-    public static final List<Class<? extends Throwable>> CLICK_EXCEPTIONS =
-        extend(COMMON_EXCEPTIONS, ElementClickInterceptedException.class, ElementNotInteractableException.class);
-
-    /**
-     * {@link #CLICK_EXCEPTIONS} plus {@link InvalidElementStateException}, which
-     * {@code clear()}/{@code sendKeys()} can throw when the element isn't yet in a state that
-     * accepts input (e.g. still disabled or read-only).
-     */
-    public static final List<Class<? extends Throwable>> SEND_KEYS_EXCEPTIONS =
-        extend(CLICK_EXCEPTIONS, InvalidElementStateException.class);
-
-    @SafeVarargs
-    private static List<Class<? extends Throwable>> extend(
-            List<Class<? extends Throwable>> base, Class<? extends Throwable>... additional) {
-        return Stream.concat(base.stream(), Stream.of(additional)).toList();
-    }
 
     /**
      * Runs the given action under a {@link WebDriverWait} built from the current driver's
@@ -91,11 +56,18 @@ public class RetryAction {
         SeleniumWait wait = new SeleniumWait();
         wait.ignoreAll(exceptionsToIgnore);
         wait.withMessage(description);
+        AtomicReference<T> result = new AtomicReference<>();
         try {
-            return wait.until(driver -> action.get());
+            // Wrapped so a legitimate false/null result from action isn't mistaken by
+            // WebDriverWait.until() for "condition not yet satisfied" and retried until timeout.
+            wait.until(driver -> {
+                result.set(action.get());
+                return true;
+            });
         } catch (TimeoutException e) {
             throw new RuntimeException(description.get() + " - timeout after " + DriverRunner.getConfig().getTimeout(), e);
         }
+        return result.get();
     }
 
     /**

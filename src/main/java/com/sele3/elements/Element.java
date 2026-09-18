@@ -12,6 +12,7 @@ import org.openqa.selenium.support.ui.Select;
 import com.sele3.drivers.DriverRunner;
 import com.sele3.waits.ElementWait;
 import com.sele3.waits.RetryAction;
+import com.sele3.waits.RetryableExceptions;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -86,9 +87,15 @@ public class Element implements BaseElement {
     * {@link #Element(String)}.
      *
      * @param args the values to substitute into the XPath template
+     * @throws IllegalStateException if this element was created with a fixed {@link By} locator
+     *         (i.e. {@link #dynamicXPathLocator} is {@code null}), since there is no template to resolve
      */
     @Override
     public void set(Object... args) {
+        if (this.dynamicXPathLocator == null) {
+            throw new IllegalStateException(
+                "set() was called on element " + locator + ", which was created with a fixed By locator and has no dynamic XPath template to resolve");
+        }
         this.locator = By.xpath(String.format(this.dynamicXPathLocator, args));
     }
 
@@ -100,7 +107,7 @@ public class Element implements BaseElement {
      */
     @Override
     public String getAttribute(String attribute) {
-        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).getAttribute(attribute), RetryAction.COMMON_EXCEPTIONS,
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).getAttribute(attribute), RetryableExceptions.COMMON_EXCEPTIONS,
             () -> "get attribute '" + attribute + "' of element " + locator);
     }
 
@@ -111,7 +118,7 @@ public class Element implements BaseElement {
      */
     @Override
     public String getText() {
-        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).getText(), RetryAction.COMMON_EXCEPTIONS,
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).getText(), RetryableExceptions.COMMON_EXCEPTIONS,
             () -> "get text of element " + locator);
     }
 
@@ -143,7 +150,7 @@ public class Element implements BaseElement {
      */
     @Override
     public String getCssValue(String name) {
-        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).getCssValue(name), RetryAction.COMMON_EXCEPTIONS,
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).getCssValue(name), RetryableExceptions.COMMON_EXCEPTIONS,
             () -> "get CSS value '" + name + "' of element " + locator);
     }
 
@@ -155,7 +162,7 @@ public class Element implements BaseElement {
      */
     @Override
     public List<String> getAllCssValues(String name) {
-        return RetryAction.retry(() -> findElements().stream().map(e -> e.getCssValue(name)).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS,
+        return RetryAction.retry(() -> findElements().stream().map(e -> e.getCssValue(name)).collect(Collectors.toList()), RetryableExceptions.COMMON_EXCEPTIONS,
             () -> "get CSS value '" + name + "' of all elements " + locator);
     }
 
@@ -166,7 +173,7 @@ public class Element implements BaseElement {
      */
     @Override
     public List<String> getAllTexts() {
-        return RetryAction.retry(() -> findElements().stream().map(e -> e.getText()).collect(Collectors.toList()), RetryAction.COMMON_EXCEPTIONS,
+        return RetryAction.retry(() -> findElements().stream().map(e -> e.getText()).collect(Collectors.toList()), RetryableExceptions.COMMON_EXCEPTIONS,
             () -> "get text of all elements " + locator);
     }
 
@@ -177,7 +184,7 @@ public class Element implements BaseElement {
     public void scrollToView() {
         RetryAction.retry(() -> {
             scrollToView(RetryAction.readyCheck(findElement()));
-        }, RetryAction.COMMON_EXCEPTIONS, () -> "scroll element " + locator + " into view");
+        }, RetryableExceptions.COMMON_EXCEPTIONS, () -> "scroll element " + locator + " into view");
     }
 
     /**
@@ -197,7 +204,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             element.click();
-        }, RetryAction.CLICK_EXCEPTIONS, () -> "click element " + locator);
+        }, RetryableExceptions.CLICK_EXCEPTIONS, () -> "click element " + locator);
     }
 
     /**
@@ -209,7 +216,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             new Actions(DriverRunner.getWebDriver()).contextClick(element).perform();
-        }, RetryAction.CLICK_EXCEPTIONS, () -> "right-click element " + locator);
+        }, RetryableExceptions.CLICK_EXCEPTIONS, () -> "right-click element " + locator);
     }
 
     /**
@@ -221,7 +228,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             new Actions(DriverRunner.getWebDriver()).doubleClick(element).perform();
-        }, RetryAction.CLICK_EXCEPTIONS, () -> "double-click element " + locator);
+        }, RetryableExceptions.CLICK_EXCEPTIONS, () -> "double-click element " + locator);
     }
 
     /**
@@ -233,7 +240,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findElement());
             scrollToCenter(element);
             new Actions(DriverRunner.getWebDriver()).moveToElement(element).perform();
-        }, RetryAction.COMMON_EXCEPTIONS, () -> "hover over element " + locator);
+        }, RetryableExceptions.COMMON_EXCEPTIONS, () -> "hover over element " + locator);
     }
 
     /**
@@ -248,7 +255,7 @@ public class Element implements BaseElement {
             scrollToCenter(element);
             element.clear();
             element.sendKeys(values);
-        }, RetryAction.SEND_KEYS_EXCEPTIONS, () -> "clear and enter text into element " + locator);
+        }, RetryableExceptions.SEND_KEYS_EXCEPTIONS, () -> "clear and enter text into element " + locator);
     }
 
     /**
@@ -262,7 +269,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             element.sendKeys(values);
-        }, RetryAction.SEND_KEYS_EXCEPTIONS, () -> "enter text into element " + locator);
+        }, RetryableExceptions.SEND_KEYS_EXCEPTIONS, () -> "enter text into element " + locator);
     }
 
     /**
@@ -276,7 +283,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             select.selectByVisibleText(option);
-        }, RetryAction.CLICK_EXCEPTIONS, () -> "select option '" + option + "' in element " + locator);
+        }, RetryableExceptions.CLICK_EXCEPTIONS, () -> "select option '" + option + "' in element " + locator);
     }
 
     /**
@@ -290,7 +297,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             select.selectByValue(value);
-        }, RetryAction.CLICK_EXCEPTIONS, () -> "select option with value '" + value + "' in element " + locator);
+        }, RetryableExceptions.CLICK_EXCEPTIONS, () -> "select option with value '" + value + "' in element " + locator);
     }
 
     /**
@@ -304,7 +311,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             select.selectByIndex(index);
-        }, RetryAction.CLICK_EXCEPTIONS, () -> "select option at index " + index + " in element " + locator);
+        }, RetryableExceptions.CLICK_EXCEPTIONS, () -> "select option at index " + index + " in element " + locator);
     }
 
     /**
@@ -318,7 +325,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             return select.getFirstSelectedOption().getText();
-        }, RetryAction.CLICK_EXCEPTIONS, () -> "get selected option of element " + locator);
+        }, RetryableExceptions.CLICK_EXCEPTIONS, () -> "get selected option of element " + locator);
     }
 
     /**
@@ -332,7 +339,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             Select select = new Select(element);
             return select.getOptions().stream().map(e -> e.getText()).collect(Collectors.toList());
-        }, RetryAction.COMMON_EXCEPTIONS, () -> "get all options of element " + locator);
+        }, RetryableExceptions.COMMON_EXCEPTIONS, () -> "get all options of element " + locator);
     }
 
     /**
@@ -346,7 +353,7 @@ public class Element implements BaseElement {
             WebElement element = RetryAction.readyCheck(findInteractableElement());
             scrollToCenter(element);
             DriverRunner.executeJS("arguments[0].click();", element);
-        }, RetryAction.CLICK_EXCEPTIONS, () -> "click element " + locator + " via JavaScript");
+        }, RetryableExceptions.CLICK_EXCEPTIONS, () -> "click element " + locator + " via JavaScript");
     }
 
     /**
@@ -356,7 +363,7 @@ public class Element implements BaseElement {
     public void scrollToCenter() {
         RetryAction.retry(() -> {
             scrollToCenter(RetryAction.readyCheck(findElement()));
-        }, RetryAction.COMMON_EXCEPTIONS, () -> "scroll element " + locator + " into center of viewport");
+        }, RetryableExceptions.COMMON_EXCEPTIONS, () -> "scroll element " + locator + " into center of viewport");
     }
 
     /**
@@ -385,7 +392,7 @@ public class Element implements BaseElement {
      */
     @Override
     public boolean isEnabled() {
-        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).isEnabled(), RetryAction.COMMON_EXCEPTIONS,
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).isEnabled(), RetryableExceptions.COMMON_EXCEPTIONS,
             () -> "check if element " + locator + " is enabled");
     }
 
@@ -396,7 +403,7 @@ public class Element implements BaseElement {
      */
     @Override
     public boolean isDisabled() {
-        return RetryAction.retry(() -> !RetryAction.readyCheck(findElement()).isEnabled(), RetryAction.COMMON_EXCEPTIONS,
+        return RetryAction.retry(() -> !RetryAction.readyCheck(findElement()).isEnabled(), RetryableExceptions.COMMON_EXCEPTIONS,
             () -> "check if element " + locator + " is disabled");
     }
 
@@ -408,5 +415,15 @@ public class Element implements BaseElement {
     @Override
     public int getSize() {
         return findElements().size();
+    }
+
+    /**
+     * Checks whether this element is currently selected/checked.
+     *
+     * @return {@code true} if the element is selected
+     */
+    public boolean isSelected() {
+        return RetryAction.retry(() -> RetryAction.readyCheck(findElement()).isSelected(), RetryableExceptions.COMMON_EXCEPTIONS,
+            () -> "check if element " + locator + " is selected");
     }
 }

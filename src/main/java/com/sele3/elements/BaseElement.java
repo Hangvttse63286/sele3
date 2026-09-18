@@ -196,4 +196,11 @@ public interface BaseElement {
      * @return the number of matching elements
      */
     int getSize();
+
+    /**
+     * Checks whether this element is currently selected/checked.
+     *
+     * @return {@code true} if the element is selected
+     */
+    boolean isSelected();
 }
