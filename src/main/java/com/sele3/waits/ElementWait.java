@@ -94,14 +94,17 @@ public class ElementWait extends SeleniumWait {
      * Waits until all elements matching the locator are present and visible.
      */
     public void untilAllVisible() {
-        until(ExpectedConditions.visibilityOfAllElementsLocatedBy(getLocator()));
+        ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
+            .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(getLocator()));
     }
 
     /**
-     * Waits until no element matching the locator is visible (or it is no longer present).
+     * Waits until every element matching the locator is invisible (or no element matches at
+     * all).
      */
     public void untilInvisible() {
-        until(ExpectedConditions.invisibilityOfElementLocated(getLocator()));
+        ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
+            .until(driver -> driver.findElements(getLocator()).stream().noneMatch(WebElement::isDisplayed));
     }
 
     /**
@@ -221,7 +224,8 @@ public class ElementWait extends SeleniumWait {
      * @param childElement the child element whose presence is required
      */
     public void untilChildrenExist(BaseElement childElement) {
-        until(ExpectedConditions.presenceOfNestedElementsLocatedBy(getLocator(), childElement.getLocator()));
+        ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
+            .until(ExpectedConditions.presenceOfNestedElementsLocatedBy(getLocator(), childElement.getLocator()));
     }
 
     /**

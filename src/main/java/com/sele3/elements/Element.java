@@ -14,7 +14,7 @@ import com.sele3.waits.ElementWait;
 import com.sele3.waits.RetryAction;
 import com.sele3.waits.RetryableExceptions;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  * that access the browser, including {@link #waits()}.
  */
 @Slf4j
-@Data
+@Getter
 public class Element implements BaseElement {
     /** The locator currently used to find this element; resolved via {@link #set(Object...)} for dynamic elements. */
     protected By locator;
