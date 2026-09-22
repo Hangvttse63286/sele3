@@ -14,7 +14,6 @@ import com.sele3.waits.ElementWait;
 import com.sele3.waits.RetryAction;
 import com.sele3.waits.RetryableExceptions;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -25,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
  * that access the browser, including {@link #waits()}.
  */
 @Slf4j
-@Getter
 public class Element implements BaseElement {
     /** The locator currently used to find this element; resolved via {@link #set(Object...)} for dynamic elements. */
     protected By locator;
@@ -49,6 +47,16 @@ public class Element implements BaseElement {
      */
     public Element(String dynamicXPathLocator) {
         this.dynamicXPathLocator = dynamicXPathLocator;
+    }
+
+    /**
+     * Returns the By locator currently used to find this element.
+     *
+     * @return the current By locator
+     */
+    @Override
+    public By getBy() {
+        return this.locator;
     }
 
     /**

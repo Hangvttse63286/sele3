@@ -27,7 +27,7 @@ public interface BaseElement {
      *
      * @return the current locator
      */
-    By getLocator();
+    By getBy();
 
     /**
      * Gets the value of the given attribute or property.

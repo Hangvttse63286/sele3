@@ -55,7 +55,7 @@ public class ElementWait extends SeleniumWait {
      * @return the located element
      */
     private WebElement findElement() {
-        return DriverRunner.getWebDriver().findElement(getLocator());
+        return DriverRunner.getWebDriver().findElement(getBy());
     }
 
     /**
@@ -65,29 +65,29 @@ public class ElementWait extends SeleniumWait {
      *
      * @return the current locator
      */
-    private By getLocator() {
-        return element.getLocator();
+    private By getBy() {
+        return element.getBy();
     }
 
     /**
      * Waits until an element matching the locator is present in the DOM.
      */
     public void untilExist() {
-        until(ExpectedConditions.presenceOfElementLocated(getLocator()));
+        until(ExpectedConditions.presenceOfElementLocated(getBy()));
     }
 
     /**
      * Waits until at least one element matching the locator is present in the DOM.
      */
     public void untilAllExist() {
-        until(ExpectedConditions.presenceOfAllElementsLocatedBy(getLocator()));
+        until(ExpectedConditions.presenceOfAllElementsLocatedBy(getBy()));
     }
 
     /**
      * Waits until an element matching the locator is present and visible.
      */
     public void untilVisible() {
-        until(ExpectedConditions.visibilityOfElementLocated(getLocator()));
+        until(ExpectedConditions.visibilityOfElementLocated(getBy()));
     }
 
     /**
@@ -95,7 +95,7 @@ public class ElementWait extends SeleniumWait {
      */
     public void untilAllVisible() {
         ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
-            .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(getLocator()));
+            .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(getBy()));
     }
 
     /**
@@ -104,7 +104,7 @@ public class ElementWait extends SeleniumWait {
      */
     public void untilInvisible() {
         ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
-            .until(driver -> driver.findElements(getLocator()).stream().noneMatch(WebElement::isDisplayed));
+            .until(driver -> driver.findElements(getBy()).stream().noneMatch(WebElement::isDisplayed));
     }
 
     /**
@@ -126,7 +126,7 @@ public class ElementWait extends SeleniumWait {
      * Waits until an element matching the locator is visible and enabled.
      */
     public void untilClickable() {
-        until(ExpectedConditions.elementToBeClickable(getLocator()));
+        until(ExpectedConditions.elementToBeClickable(getBy()));
     }
 
     /**
@@ -162,7 +162,7 @@ public class ElementWait extends SeleniumWait {
      * @param text the expected text
      */
     public void untilTextEquals(String text) {
-        until(ExpectedConditions.textToBe(getLocator(), text));
+        until(ExpectedConditions.textToBe(getBy(), text));
     }
 
     /**
@@ -181,7 +181,7 @@ public class ElementWait extends SeleniumWait {
      * @param text the substring expected to appear in the element's text
      */
     public void untilTextContains(String text) {
-        until(ExpectedConditions.textToBePresentInElementLocated(getLocator(), text));
+        until(ExpectedConditions.textToBePresentInElementLocated(getBy(), text));
     }
 
     /**
@@ -192,7 +192,7 @@ public class ElementWait extends SeleniumWait {
      */
     public void untilAttributeEquals(String attribute, String value) {
         ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
-            .until(ExpectedConditions.attributeToBe(getLocator(), attribute, value));
+            .until(ExpectedConditions.attributeToBe(getBy(), attribute, value));
     }
 
     /**
@@ -214,18 +214,7 @@ public class ElementWait extends SeleniumWait {
      */
     public void untilAttributeContains(String attribute, String value) {
         ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
-            .until(ExpectedConditions.attributeContains(getLocator(), attribute, value));
-    }
-
-    /**
-     * Waits until the element matching this wait's locator contains an element matching the
-     * child locator.
-     *
-     * @param childElement the child element whose presence is required
-     */
-    public void untilChildrenExist(BaseElement childElement) {
-        ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
-            .until(ExpectedConditions.presenceOfNestedElementsLocatedBy(getLocator(), childElement.getLocator()));
+            .until(ExpectedConditions.attributeContains(getBy(), attribute, value));
     }
 
     /**
@@ -236,7 +225,7 @@ public class ElementWait extends SeleniumWait {
      */
     public void untilSelectionStateToBe(boolean selected) {
         ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
-            .until(ExpectedConditions.elementSelectionStateToBe(getLocator(), selected));
+            .until(ExpectedConditions.elementSelectionStateToBe(getBy(), selected));
     }
 
     /**
