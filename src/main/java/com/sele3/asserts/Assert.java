@@ -5,17 +5,10 @@ import java.util.Collection;
 import com.sele3.elements.BaseElement;
 
 /**
- * Entry point for hard (fail-fast) assertions, in the style of Playwright Test's {@code expect()}:
- * {@code Assert.expect(actual).toEqual(expected)} throws an {@link AssertionException} as soon as
- * the assertion fails, immediately stopping the current test. For an assertion that instead
- * collects failures and reports them together, see {@link SoftAssert}.
- *
- * <p>Overloaded {@code expect} methods dispatch to a typed matcher ({@link BooleanExpect},
- * {@link StringExpect}, {@link NumberExpect}, {@link CollectionExpect}) based on the static type of
- * the argument, falling back to {@link ObjectExpect} for anything else.
- *
- * <p>{@link #fail(AssertionException)} is also this class's hook for a custom matcher over your
- * own type; see {@link BaseExpect} for how to build one.
+ * Entry point for hard (fail-fast) assertions: {@code Assert.expect(actual).toEqual(expected)}
+ * throws an {@link AssertionException} as soon as the assertion fails, immediately stopping the
+ * current test. For an assertion that instead collects failures and reports them together, see
+ * {@link SoftAssert}.
  */
 public final class Assert {
 

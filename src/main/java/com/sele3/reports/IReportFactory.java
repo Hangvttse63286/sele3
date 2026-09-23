@@ -46,12 +46,8 @@ public interface IReportFactory {
 
     /**
      * Runs {@code body} as a named step against the current test, recording it as
-     * {@link ReportStatus#PASS} if {@code body} returns normally. If it throws, the step is
-     * recorded as failed — {@link ReportStatus#FAIL} for an {@link AssertionError} (a plain
-     * assertion failure), or an implementation-specific "broken" status otherwise (e.g.
-     * {@link ReportStatus#BROKEN} for Allure), since that's an unexpected error rather than a
-     * failed check; either way, a screenshot is attached to the step. The exception is always
-     * rethrown after being recorded, so a failing step still fails the calling test.
+     * {@link ReportStatus#PASS} if it returns normally or a failure status if it throws (a
+     * screenshot is attached either way), then rethrows so a failing step still fails the test.
      *
      * @param stepName a short description of the step performed
      * @param body the code to run as this step

@@ -9,23 +9,10 @@ import com.sele3.elements.BaseElement;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Holds one thread-isolated bucket of soft-assertion failures, in the style of Playwright Test's
- * {@code expect.soft()}: {@code softAssertContainer.expect(actual).toEqual(expected)} records a
- * failure instead of throwing, letting the rest of the test keep running; call
- * {@link #assertAll()} to fail the test with every collected failure reported together. For a
- * fail-fast equivalent, see {@link Assert}.
- *
- * <p>Failures are kept in a {@link ThreadLocal}, so a single {@link SoftAssertContainer} instance
- * is safe to use from tests running in parallel on different threads: each thread only ever sees
- * and clears its own failures. {@link SoftAssert} is the usual way to use one — it delegates to a
- * single static {@link SoftAssertContainer}, the same way {@link com.sele3.drivers.DriverRunner}
- * delegates to a {@link com.sele3.drivers.DriverContainer} — so most callers never need to
- * instantiate this class directly. Instantiate it yourself only for an independent soft-assert
- * scope kept separate from the shared one (e.g. a helper that must report its own failures without
- * mixing them into the calling test's).
- *
- * <p>{@link #record(AssertionException)} is also this instance's hook for a custom matcher over
- * your own type; see {@link BaseExpect} for how to build one.
+ * Holds one thread-isolated bucket of soft-assertion failures. Records a failure instead of
+ * throwing, letting the test keep running; call {@link #assertAll()} to fail with every collected
+ * failure reported together. {@link SoftAssert} delegates to a single shared instance of this
+ * class, so instantiate it yourself only for an independent soft-assert scope.
  */
 @Slf4j
 public class SoftAssertContainer {
