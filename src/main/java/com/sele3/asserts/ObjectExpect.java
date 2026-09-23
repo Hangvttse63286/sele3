@@ -6,11 +6,12 @@ import java.util.function.Consumer;
 /**
  * Fluent matchers for an arbitrary value, obtained via {@link Assert#expect} or
  * {@link SoftAssert#expect}. The fallback used when no more specific {@code *Expect} type
- * (e.g. {@link StringExpect}, {@link NumberExpect}) applies.
+ * (e.g. {@link NumberExpect}) applies; extended directly by {@link StringExpect} to reuse the
+ * generic {@code toEqual}/{@code toNotEqual}/{@code toBeNull}/{@code toBeNotNull} matchers.
  *
  * @param <T> the type of the value under assertion
  */
-public final class ObjectExpect<T> extends BaseExpect<T> {
+public class ObjectExpect<T> extends BaseExpect<T> {
 
     ObjectExpect(T actual, String description, Consumer<AssertionException> onFailure) {
         super(actual, description, onFailure);

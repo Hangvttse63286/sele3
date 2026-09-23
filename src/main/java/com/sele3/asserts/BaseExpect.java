@@ -2,6 +2,9 @@ package com.sele3.asserts;
 
 import java.util.function.Consumer;
 
+import com.sele3.reports.ReportRunner;
+import com.sele3.reports.ReportStatus;
+
 /**
  * Common state and failure-reporting logic shared by every typed {@code *Expect} matcher
  * (e.g. {@link StringExpect}, {@link NumberExpect}). Callers obtain a built-in matcher from
@@ -53,15 +56,23 @@ public abstract class BaseExpect<T> {
     }
 
     /**
-     * Reports a failure via this instance's failure handler unless {@code passed} is {@code true}.
+     * Reports this check as a report step — {@link ReportStatus#PASS} or {@link ReportStatus#FAIL}
+     * — and, unless {@code passed} is {@code true}, also reports a failure via this instance's
+     * failure handler.
      *
      * @param passed whether the checked condition held
      * @param expectation a human-readable description of what was expected, e.g. {@code "Expected: to equal \"foo\""}
      */
     protected void check(boolean passed, String expectation) {
+        String message = buildMessage(expectation);
+        ReportRunner.step(passed ? ReportStatus.PASS : ReportStatus.FAIL, message);
         if (passed) {
             return;
         }
+        onFailure.accept(new AssertionException(message));
+    }
+
+    private String buildMessage(String expectation) {
         StringBuilder message = new StringBuilder();
         if (description != null) {
             message.append(description).append(System.lineSeparator());
@@ -70,7 +81,7 @@ public abstract class BaseExpect<T> {
                 .append(System.lineSeparator())
                 .append("Actual:   ")
                 .append(format(actual));
-        onFailure.accept(new AssertionException(message.toString()));
+        return message.toString();
     }
 
     /**
@@ -91,7 +102,7 @@ public abstract class BaseExpect<T> {
      * Picks the single optional description out of a factory method's {@code String...
      * description} varargs parameter (only the first element is used, if any). A convenience for
      * custom {@code expect} entry points built on this class; the built-in {@code Assert}/
-     * {@code SoftAssert} overloads use it via {@link Expects}.
+     * {@code SoftAssert} overloads use it directly when constructing their typed matchers.
      *
      * @param description zero or one description strings
      * @return the description, or {@code null} if none was given

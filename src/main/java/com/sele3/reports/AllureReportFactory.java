@@ -4,9 +4,16 @@ import java.io.ByteArrayInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Base64;
+import java.util.UUID;
+
+import org.openqa.selenium.OutputType;
+
+import com.sele3.drivers.DriverRunner;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StepResult;
+import io.qameta.allure.util.ResultsUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -37,12 +44,37 @@ public class AllureReportFactory implements IReportFactory {
 
     @Override
     public void step(IReportStatus status, String stepName) {
-        Allure.step(stepName, toAllureStatus(status));
+        // Not Allure.step(name, status): a screenshot needs to attach to the step while it's
+        // still open, so the step is driven manually instead of via that closed one-liner.
+        String uuid = UUID.randomUUID().toString();
+        Allure.getLifecycle().startStep(uuid, new StepResult().setName(stepName).setStatus(toAllureStatus(status)));
+        if (status.isFailureStatus()) {
+            attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+        }
+        Allure.getLifecycle().stopStep(uuid);
     }
 
     @Override
     public void step(String stepName, Runnable body) {
-        Allure.step(stepName, body::run);
+        // Not Allure.step(name, body::run): we need the exception in hand, before the step
+        // closes, to attach a screenshot to it when it's broken (not a plain assertion failure).
+        String uuid = UUID.randomUUID().toString();
+        Allure.getLifecycle().startStep(uuid, new StepResult().setName(stepName));
+        try {
+            body.run();
+            Allure.getLifecycle().updateStep(uuid, step -> step.setStatus(Status.PASSED));
+        } catch (Throwable t) {
+            Status status = ResultsUtils.getStatus(t).orElse(Status.BROKEN);
+            Allure.getLifecycle().updateStep(uuid, step -> step
+                    .setStatus(status)
+                    .setStatusDetails(ResultsUtils.getStatusDetails(t).orElse(null)));
+            if (status == Status.BROKEN) {
+                attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            }
+            throw t;
+        } finally {
+            Allure.getLifecycle().stopStep(uuid);
+        }
     }
 
     @Override

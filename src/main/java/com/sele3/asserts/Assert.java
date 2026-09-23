@@ -31,7 +31,7 @@ public final class Assert {
      * @return a matcher for {@code actual}
      */
     public static <T> ObjectExpect<T> expect(T actual, String... description) {
-        return Expects.object(actual, Assert::fail, description);
+        return new ObjectExpect<>(actual, BaseExpect.describe(description), Assert::fail);
     }
 
     /**
@@ -42,7 +42,7 @@ public final class Assert {
      * @return a matcher for {@code actual}
      */
     public static BooleanExpect expect(Boolean actual, String... description) {
-        return Expects.bool(actual, Assert::fail, description);
+        return new BooleanExpect(actual, BaseExpect.describe(description), Assert::fail);
     }
 
     /**
@@ -53,7 +53,7 @@ public final class Assert {
      * @return a matcher for {@code actual}
      */
     public static StringExpect expect(String actual, String... description) {
-        return Expects.string(actual, Assert::fail, description);
+        return new StringExpect(actual, BaseExpect.describe(description), Assert::fail);
     }
 
     /**
@@ -65,7 +65,7 @@ public final class Assert {
      * @return a matcher for {@code actual}
      */
     public static <T extends Number & Comparable<T>> NumberExpect<T> expect(T actual, String... description) {
-        return Expects.number(actual, Assert::fail, description);
+        return new NumberExpect<>(actual, BaseExpect.describe(description), Assert::fail);
     }
 
     /**
@@ -77,7 +77,7 @@ public final class Assert {
      * @return a matcher for {@code actual}
      */
     public static <E> CollectionExpect<E> expect(Collection<E> actual, String... description) {
-        return Expects.collection(actual, Assert::fail, description);
+        return new CollectionExpect<>(actual, BaseExpect.describe(description), Assert::fail);
     }
 
     /**
@@ -90,7 +90,7 @@ public final class Assert {
      * @return a matcher for {@code actual}
      */
     public static ElementExpect expect(BaseElement actual, String... description) {
-        return Expects.element(actual, Assert::fail, description);
+        return new ElementExpect(actual, BaseExpect.describe(description), Assert::fail);
     }
 
     /**

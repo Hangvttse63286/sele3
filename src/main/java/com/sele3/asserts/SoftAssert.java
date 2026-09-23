@@ -34,7 +34,7 @@ public class SoftAssert {
      * @return a matcher for {@code actual}
      */
     public <T> ObjectExpect<T> expect(T actual, String... description) {
-        return Expects.object(actual, this::record, description);
+        return new ObjectExpect<>(actual, BaseExpect.describe(description), this::record);
     }
 
     /**
@@ -45,7 +45,7 @@ public class SoftAssert {
      * @return a matcher for {@code actual}
      */
     public BooleanExpect expect(Boolean actual, String... description) {
-        return Expects.bool(actual, this::record, description);
+        return new BooleanExpect(actual, BaseExpect.describe(description), this::record);
     }
 
     /**
@@ -56,7 +56,7 @@ public class SoftAssert {
      * @return a matcher for {@code actual}
      */
     public StringExpect expect(String actual, String... description) {
-        return Expects.string(actual, this::record, description);
+        return new StringExpect(actual, BaseExpect.describe(description), this::record);
     }
 
     /**
@@ -68,7 +68,7 @@ public class SoftAssert {
      * @return a matcher for {@code actual}
      */
     public <T extends Number & Comparable<T>> NumberExpect<T> expect(T actual, String... description) {
-        return Expects.number(actual, this::record, description);
+        return new NumberExpect<>(actual, BaseExpect.describe(description), this::record);
     }
 
     /**
@@ -80,7 +80,7 @@ public class SoftAssert {
      * @return a matcher for {@code actual}
      */
     public <E> CollectionExpect<E> expect(Collection<E> actual, String... description) {
-        return Expects.collection(actual, this::record, description);
+        return new CollectionExpect<>(actual, BaseExpect.describe(description), this::record);
     }
 
     /**
@@ -93,7 +93,7 @@ public class SoftAssert {
      * @return a matcher for {@code actual}
      */
     public ElementExpect expect(BaseElement actual, String... description) {
-        return Expects.element(actual, this::record, description);
+        return new ElementExpect(actual, BaseExpect.describe(description), this::record);
     }
 
     /**

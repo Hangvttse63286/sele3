@@ -1,25 +1,17 @@
 package com.sele3.asserts;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
  * Fluent matchers for a {@link String} value, obtained via {@link Assert#expect} or
- * {@link SoftAssert#expect}.
+ * {@link SoftAssert#expect}. Extends {@link ObjectExpect} for the generic
+ * {@code toEqual}/{@code toNotEqual}/{@code toBeNull}/{@code toBeNotNull} matchers, adding
+ * string-specific ones.
  */
-public final class StringExpect extends BaseExpect<String> {
+public final class StringExpect extends ObjectExpect<String> {
 
     StringExpect(String actual, String description, Consumer<AssertionException> onFailure) {
         super(actual, description, onFailure);
-    }
-
-    /**
-     * Asserts that the actual string is equal to {@code expected}.
-     *
-     * @param expected the expected string
-     */
-    public void toEqual(String expected) {
-        check(Objects.equals(actual, expected), "Expected: to equal " + format(expected));
     }
 
     /**
@@ -79,19 +71,5 @@ public final class StringExpect extends BaseExpect<String> {
      */
     public void toBeNotEmpty() {
         check(actual != null && !actual.isEmpty(), "Expected: to be non-empty");
-    }
-
-    /**
-     * Asserts that the actual string is {@code null}.
-     */
-    public void toBeNull() {
-        check(actual == null, "Expected: to be null");
-    }
-
-    /**
-     * Asserts that the actual string is not {@code null}.
-     */
-    public void toBeNotNull() {
-        check(actual != null, "Expected: to be non-null");
     }
 }
