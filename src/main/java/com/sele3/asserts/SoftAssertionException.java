@@ -5,8 +5,7 @@ import java.util.List;
 /**
  * Thrown by {@link SoftAssert#assertAll()} when one or more soft assertions failed. Aggregates
  * every {@link AssertionException} collected on the calling thread since the last
- * {@link SoftAssert#assertAll()}/{@link SoftAssert#reset()}, formatting them into a single
- * numbered report.
+ * {@link SoftAssert#assertAll()}, formatting them into a single numbered report.
  */
 public class SoftAssertionException extends RuntimeException {
     private final transient List<AssertionException> failures;

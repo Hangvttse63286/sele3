@@ -9,7 +9,7 @@ import java.util.function.Consumer;
  *
  * @param <T> the numeric type under assertion
  */
-public final class NumberExpect<T extends Number & Comparable<T>> extends BaseExpect<T> {
+public final class NumberExpect<T extends Number & Comparable<T>> extends ObjectExpect<T> {
 
     NumberExpect(T actual, String description, Consumer<AssertionException> onFailure) {
         super(actual, description, onFailure);
@@ -20,8 +20,19 @@ public final class NumberExpect<T extends Number & Comparable<T>> extends BaseEx
      *
      * @param expected the expected value
      */
+    @Override
     public void toEqual(T expected) {
         check(actual != null && actual.compareTo(expected) == 0, "Expected: to equal " + format(expected));
+    }
+
+    /**
+     * Asserts that the actual value is not numerically equal to {@code expected}, per {@link Comparable#compareTo}.
+     *
+     * @param expected the value the actual value must numerically differ from
+     */
+    @Override
+    public void toNotEqual(T expected) {
+        check(actual != null && actual.compareTo(expected) != 0, "Expected: to not equal " + format(expected));
     }
 
     /**
@@ -61,13 +72,24 @@ public final class NumberExpect<T extends Number & Comparable<T>> extends BaseEx
     }
 
     /**
-     * Asserts that the actual value falls within {@code [min, max]}, inclusive.
+     * Asserts that the actual value falls between {@code [min, max]}, inclusive.
      *
      * @param min the lower bound, inclusive
      * @param max the upper bound, inclusive
      */
-    public void toBeBetween(T min, T max) {
+    public void toBeBetweenInclusive(T min, T max) {
         check(actual != null && actual.compareTo(min) >= 0 && actual.compareTo(max) <= 0,
-                "Expected: to be between " + format(min) + " and " + format(max));
+                "Expected: to be between " + format(min) + " and " + format(max) + ", inclusive");
+    }
+
+    /**
+     * Asserts that the actual value falls between {@code [min, max]}, exclusive.
+     *
+     * @param min the lower bound, exclusive
+     * @param max the upper bound, exclusive
+     */
+    public void toBeBetweenExclusive(T min, T max) {
+        check(actual != null && actual.compareTo(min) > 0 && actual.compareTo(max) < 0,
+                "Expected: to be between " + format(min) + " and " + format(max) + ", exclusive");
     }
 }

@@ -6,10 +6,10 @@ import java.util.function.Consumer;
 /**
  * Fluent matchers for a {@link Collection}, obtained via {@link Assert#expect} or
  * {@link SoftAssert#expect}.
- *
+ * 
  * @param <E> the element type of the collection under assertion
  */
-public final class CollectionExpect<E> extends BaseExpect<Collection<E>> {
+public final class CollectionExpect<E> extends ObjectExpect<Collection<E>> {
 
     CollectionExpect(Collection<E> actual, String description, Consumer<AssertionException> onFailure) {
         super(actual, description, onFailure);

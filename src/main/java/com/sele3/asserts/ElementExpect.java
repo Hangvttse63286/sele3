@@ -12,9 +12,7 @@ import com.sele3.waits.ElementWait;
  * Fluent matchers for a {@link BaseElement}, obtained via {@link Assert#expect} or
  * {@link SoftAssert#expect}. Unlike the other {@code *Expect} types, each matcher here polls the
  * element (via {@link BaseElement#waits()}, i.e. {@link ElementWait}, using the current driver's
- * configured timeout/polling interval) instead of checking its state once — in the style of
- * Playwright Test's "web-first assertions" (e.g. {@code expect(locator).toBeVisible()}) — so a
- * slow-to-render element doesn't need a separate explicit wait before the assertion.
+ * configured timeout/polling interval) instead of checking its state once.
  */
 public final class ElementExpect extends BaseExpect<BaseElement> {
 
@@ -46,8 +44,8 @@ public final class ElementExpect extends BaseExpect<BaseElement> {
     /**
      * Asserts that the element is visible and enabled.
      */
-    public void toBeClickable() {
-        checkWait(() -> actual.waits().untilClickable(), "Expected: element to be clickable");
+    public void toBeInteractable() {
+        checkWait(() -> actual.waits().untilClickable(), "Expected: element to be interactable");
     }
 
     /**

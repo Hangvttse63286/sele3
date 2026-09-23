@@ -5,9 +5,7 @@ import java.util.function.Consumer;
 
 /**
  * Fluent matchers for an arbitrary value, obtained via {@link Assert#expect} or
- * {@link SoftAssert#expect}. The fallback used when no more specific {@code *Expect} type
- * (e.g. {@link NumberExpect}) applies; extended directly by {@link StringExpect} to reuse the
- * generic {@code toEqual}/{@code toNotEqual}/{@code toBeNull}/{@code toBeNotNull} matchers.
+ * {@link SoftAssert#expect}.
  *
  * @param <T> the type of the value under assertion
  */

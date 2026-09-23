@@ -4,9 +4,7 @@ import java.util.function.Consumer;
 
 /**
  * Fluent matchers for a {@link String} value, obtained via {@link Assert#expect} or
- * {@link SoftAssert#expect}. Extends {@link ObjectExpect} for the generic
- * {@code toEqual}/{@code toNotEqual}/{@code toBeNull}/{@code toBeNotNull} matchers, adding
- * string-specific ones.
+ * {@link SoftAssert#expect}.
  */
 public final class StringExpect extends ObjectExpect<String> {
 
