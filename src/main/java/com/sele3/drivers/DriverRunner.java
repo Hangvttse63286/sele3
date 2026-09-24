@@ -201,4 +201,22 @@ public class DriverRunner {
     public static boolean isHeadless() {
         return getConfig().isHeadless();
     }
+
+    /**
+     * Returns the current page's URL.
+     *
+     * @return the current page's URL
+     */
+    public static String getCurrentUrl() {
+        return getWebDriver().getCurrentUrl();
+    }
+
+    /**
+     * Returns the current page's title.
+     *
+     * @return the current page's title
+     */
+    public static String getPageTitle() {
+        return getWebDriver().getTitle();
+    }
 }

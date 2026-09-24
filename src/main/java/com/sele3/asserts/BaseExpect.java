@@ -45,11 +45,25 @@ public abstract class BaseExpect<T> {
         if (description != null) {
             message.append(description).append(System.lineSeparator());
         }
-        message.append(expectation)
-                .append(System.lineSeparator())
-                .append("Actual:   ")
-                .append(format(actual));
+        message.append(expectation);
+        if (includeActualInMessage()) {
+            message.append(System.lineSeparator())
+                    .append("Actual:   ")
+                    .append(format(actual));
+        }
         return message.toString();
+    }
+
+    /**
+     * Whether {@link #buildMessage} should append an "Actual: ..." line showing {@link #actual}.
+     * True by default; override to suppress it when {@code actual} itself isn't meaningful to
+     * show, e.g. {@link ElementExpect}, where {@code actual} is the element wrapper/locator
+     * rather than the live DOM state that was actually checked.
+     *
+     * @return whether to include the Actual line
+     */
+    protected boolean includeActualInMessage() {
+        return true;
     }
 
     /**

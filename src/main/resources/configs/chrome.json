@@ -6,7 +6,7 @@
   "startMaximized": true,
   "timeout": 60000,
   "pollingInterval": 500,
-  "baseUrl": "http://localhost:8080",
+  "baseUrl": "https://demo.testarchitect.com",
   "remoteUrl": "http://localhost:4444/wd/hub",
   "remote": false,
   "capabilities": {

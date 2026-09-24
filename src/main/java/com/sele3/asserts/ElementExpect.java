@@ -21,6 +21,17 @@ public final class ElementExpect extends BaseExpect<BaseElement> {
     }
 
     /**
+     * {@code actual} here is the element wrapper/locator, not the live DOM state that was
+     * actually checked (text, an attribute, visibility, ...), so it isn't meaningful to print —
+     * unlike {@code String}/{@code Number}/etc. expectations, where {@code actual} is the exact
+     * value compared.
+     */
+    @Override
+    protected boolean includeActualInMessage() {
+        return false;
+    }
+
+    /**
      * Asserts that an element matching the locator is present in the DOM.
      */
     public void toBeAttached() {
@@ -183,6 +194,6 @@ public final class ElementExpect extends BaseExpect<BaseElement> {
                 passed = false;
             }
         }
-        check(passed, expectation + " (waited up to " + DriverRunner.getConfig().getTimeout() + ")");
+        check(passed, expectation + " (waited up to " + DriverRunner.getConfig().getTimeout().toMillis() + " miliseconds)");
     }
 }
