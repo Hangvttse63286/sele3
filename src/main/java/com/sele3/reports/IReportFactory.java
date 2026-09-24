@@ -36,7 +36,8 @@ public interface IReportFactory {
 
     /**
      * Records a named step against the current test at the given status, grouping any log
-     * lines that logically belong to that step.
+     * lines that logically belong to that step. A screenshot is attached to the step when
+     * {@link IReportStatus#isFailureStatus() status.isFailureStatus()} is {@code true}.
      *
      * @param status the step's outcome
      * @param stepName a short description of the step performed
@@ -45,9 +46,8 @@ public interface IReportFactory {
 
     /**
      * Runs {@code body} as a named step against the current test, recording it as
-     * {@link IReportStatus#PASS} if {@code body} returns normally, or as
-     * {@link IReportStatus#FAIL} (with the exception recorded) if it throws. The exception is
-     * always rethrown after being recorded, so a failing step still fails the calling test.
+     * {@link ReportStatus#PASS} if it returns normally or a failure status if it throws (a
+     * screenshot is attached either way), then rethrows so a failing step still fails the test.
      *
      * @param stepName a short description of the step performed
      * @param body the code to run as this step
