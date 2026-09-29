@@ -84,6 +84,19 @@ jobs:
             echo "No TestNG results found." >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      # allure-maven downloads Allure 3 and Node.js itself; the report is one self-contained index.html.
+      - name: Generate Allure single-file report
+        if: always() && env.REPORT_TYPE == 'allure' && hashFiles('target/reports/allure-reports/*') != ''
+        run: mvn -B allure:report
+
+      - name: Upload Allure single-file report
+        if: always() && env.REPORT_TYPE == 'allure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-report-${{ env.PLATFORM }}-run${{ github.run_number }}
+          path: target/reports/allure-html/index.html
+          if-no-files-found: warn
+
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -91,5 +104,6 @@ jobs:
           name: reports-${{ env.PLATFORM }}-${{ env.REPORT_TYPE }}-run${{ github.run_number }}
           path: |
             target/reports/
+            !target/reports/allure-html/
             target/surefire-reports/
           if-no-files-found: warn
