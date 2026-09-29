@@ -44,10 +44,7 @@ public interface ITestLifecycle {
                 error.addSuppressed(softFailures);
             }
         }
-        if (error != null) {
-            ReportRunner.logException(error);
-        }
-        ReportRunner.endTest(error == null ? ReportStatus.PASS : ReportStatus.FAIL);
+        ReportRunner.endTest(error == null ? ReportStatus.PASS : ReportStatus.FAIL, error);
         return error;
     }
 
@@ -63,9 +60,6 @@ public interface ITestLifecycle {
         } catch (AssertionError ignored) {
             // Already reported as FAIL steps when collected; a skipped test doesn't fail on them.
         }
-        if (reason != null) {
-            ReportRunner.log(ReportStatus.SKIP, String.valueOf(reason.getMessage()));
-        }
-        ReportRunner.endTest(ReportStatus.SKIP);
+        ReportRunner.endTest(ReportStatus.SKIP, reason);
     }
 }

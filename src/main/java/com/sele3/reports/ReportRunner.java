@@ -53,8 +53,25 @@ public class ReportRunner {
      * @param status the test's final status
      */
     public static void endTest(IReportStatus status) {
+        endTest(status, null);
+    }
+
+    /**
+     * Finalizes the current thread's test entry (if reporting is enabled), recording why it
+     * failed or was skipped, and clears its report factory binding.
+     *
+     * @param status the test's final status
+     * @param error the error that failed the test or the reason it was skipped, or {@code null}
+     * @see IReportFactory#endTest(IReportStatus, Throwable)
+     */
+    public static void endTest(IReportStatus status, Throwable error) {
         log.info("Ending test: status={}", status);
-        ifReporting(factory -> factory.endTest(status));
+        if (error != null && status == ReportStatus.SKIP) {
+            log.info("[SKIP]: {}", error.getMessage());
+        } else if (error != null) {
+            log.error("[EXCEPTION]: {}", error.getMessage(), error);
+        }
+        ifReporting(factory -> factory.endTest(status, error));
         reportContainer.clear();
     }
 

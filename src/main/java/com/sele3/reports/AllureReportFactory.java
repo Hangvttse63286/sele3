@@ -37,6 +37,15 @@ public class AllureReportFactory implements IReportFactory {
         log.debug("Allure test lifecycle is managed by the listener; final status={}", status);
     }
 
+    /**
+     * Doesn't log {@code error}: the Allure listener already records it (a failure's message and
+     * stack trace, or the skip reason) on the test result, so logging it here would show it twice.
+     */
+    @Override
+    public void endTest(IReportStatus status, Throwable error) {
+        endTest(status);
+    }
+
     @Override
     public void log(IReportStatus status, String message) {
         Allure.step(message, toAllureStatus(status));

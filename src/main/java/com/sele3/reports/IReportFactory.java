@@ -12,7 +12,7 @@ public interface IReportFactory {
     /**
      * Starts a new test entry in the report, becoming the target of subsequent
      * {@link #log}/{@link #logException}/{@link #attachScreenshot}/{@link #attachText}/
-     * {@link #step} calls until {@link #endTest()} is called.
+     * {@link #step} calls until {@link #endTest} is called.
      *
      * @param name the test's display name
      * @param description a longer description of what the test verifies, or {@code null} for none
@@ -25,6 +25,26 @@ public interface IReportFactory {
      * @param status the test's final status
      */
     void endTest(IReportStatus status);
+
+    /**
+     * Finalizes the current test entry, recording why it failed or was skipped. By default logs
+     * {@code error} first: a skip reason as a {@link ReportStatus#SKIP} message, anything else via
+     * {@link #logException}. A backend whose test-runner integration already records it (e.g.
+     * Allure) overrides this to avoid a duplicate.
+     *
+     * @param status the test's final status
+     * @param error the error that failed the test or the reason it was skipped, or {@code null}
+     */
+    default void endTest(IReportStatus status, Throwable error) {
+        if (error != null) {
+            if (status == ReportStatus.SKIP) {
+                log(status, String.valueOf(error.getMessage()));
+            } else {
+                logException(error);
+            }
+        }
+        endTest(status);
+    }
 
     /**
      * Logs a single message against the current test at the given status.
