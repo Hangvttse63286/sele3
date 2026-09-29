@@ -115,6 +115,8 @@
                     <resultsDirectory>reports/allure-reports</resultsDirectory>
                     <reportDirectory>${project.build.directory}/reports/allure-html</reportDirectory>
                     <singleFile>true</singleFile>
+                    <!-- the plugin's default (3.4.1) renders blank test pages; see allure-maven -Dreport.version -->
+                    <reportVersion>3.19.1</reportVersion>
                 </configuration>
             </plugin>
         </plugins>
