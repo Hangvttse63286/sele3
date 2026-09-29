@@ -23,10 +23,10 @@ public class ContactFormTest extends TestBase {
         ReportRunner.step("Open the contact page", () -> contactLink.click());
         ReportRunner.step("Scroll the contact form into view", () -> nameField.scrollToView());
 
-        Assert.expect(nameField, "Name field is not marked invalid before submitting").toHaveAttribute("aria-invalid", "false");
+        Assert.assertThat(nameField).as("Name field is not marked invalid before submitting").hasAttribute("aria-invalid", "false");
 
         ReportRunner.step("Submit the contact form", () -> sendButton.click());
 
-        Assert.expect(nameField, "Name field is marked invalid after submitting empty").toHaveAttribute("aria-invalid", "true");
+        Assert.assertThat(nameField).as("Name field is marked invalid after submitting empty").hasAttribute("aria-invalid", "true");
     }
 }

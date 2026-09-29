@@ -57,7 +57,7 @@ public class AllureReportFactory implements IReportFactory {
     @Override
     public void step(String stepName, Runnable body) {
         // Not Allure.step(name, body::run): we need the exception in hand, before the step
-        // closes, to attach a screenshot to it when it's broken (not a plain assertion failure).
+        // closes, to attach a screenshot to it.
         String uuid = UUID.randomUUID().toString();
         Allure.getLifecycle().startStep(uuid, new StepResult().setName(stepName));
         try {
@@ -68,9 +68,7 @@ public class AllureReportFactory implements IReportFactory {
             Allure.getLifecycle().updateStep(uuid, step -> step
                     .setStatus(status)
                     .setStatusDetails(ResultsUtils.getStatusDetails(t).orElse(null)));
-            if (status == Status.BROKEN) {
-                attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
-            }
+            attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
             throw t;
         } finally {
             Allure.getLifecycle().stopStep(uuid);
@@ -79,7 +77,7 @@ public class AllureReportFactory implements IReportFactory {
 
     @Override
     public void logException(Throwable throwable) {
-        Allure.step(throwable.getMessage() != null ? throwable.getMessage() : throwable.toString(), Status.FAILED);
+        Allure.step(throwable.getMessage() != null ? throwable.getMessage().strip() : throwable.toString(), Status.FAILED);
         Allure.addAttachment("Exception", "text/plain", stackTraceToString(throwable), ".txt");
     }
 

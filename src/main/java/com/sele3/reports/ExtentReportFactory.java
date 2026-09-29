@@ -75,9 +75,7 @@ public class ExtentReportFactory implements IReportFactory {
             node.pass(stepName);
         } catch (Throwable t) {
             node.fail(stepName + " failed with exception: " + t.getMessage());
-            if (!(t instanceof AssertionError)) {
-                node.addScreenCaptureFromBase64String(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
-            }
+            node.addScreenCaptureFromBase64String(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
             throw t;
         }
     }

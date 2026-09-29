@@ -21,7 +21,7 @@ public class CartTest extends TestBase {
     public void emptyCartShowsEmptyMessage() {
         ReportRunner.step("Open the cart page", () -> cartLink.click());
 
-        Assert.expect(emptyCartHeading, "Empty cart heading is visible").toBeVisible();
-        Assert.expect(emptyCartHeading, "Empty cart heading shows the expected message").toContainText("YOUR SHOPPING CART IS EMPTY");
+        Assert.assertThat(emptyCartHeading).as("Empty cart heading is visible").isVisible();
+        Assert.assertThat(emptyCartHeading).as("Empty cart heading shows the expected message").containsText("YOUR SHOPPING CART IS EMPTY");
     }
 }

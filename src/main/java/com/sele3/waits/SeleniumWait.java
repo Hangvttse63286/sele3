@@ -10,6 +10,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.sele3.drivers.DriverRunner;
 import com.sele3.elements.BaseElement;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -24,13 +25,19 @@ import lombok.extern.slf4j.Slf4j;
 public class SeleniumWait extends WebDriverWait{
 
     /**
+     * The maximum time this wait waits. Kept here because {@code FluentWait} stores it privately.
+     */
+    @Getter
+    private Duration timeout;
+
+    /**
      * Creates a {@link SeleniumWait} with no bound {@link BaseElement}, using the current
      * driver's configured timeout and polling interval. Only the element-independent waits
     * (e.g. {@link #untilPageToLoad}, {@link #untilUrlContains}) can be used until an element
     * is set.
      */
     public SeleniumWait() {
-        super(DriverRunner.getWebDriver(), DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval());
+        this(DriverRunner.getConfig().getTimeout(), DriverRunner.getConfig().getPollingInterval());
     }
 
     /**
@@ -42,6 +49,22 @@ public class SeleniumWait extends WebDriverWait{
      */
     public SeleniumWait(Duration timeout, Duration pollingInterval) {
         super(DriverRunner.getWebDriver(), timeout, pollingInterval);
+        this.timeout = timeout;
+    }
+
+    /**
+     * Sets the maximum time to wait, keeping {@link #getTimeout()} in sync.
+     *
+     * @param timeout the maximum time to wait; {@code null} keeps the current timeout
+     * @return this wait
+     */
+    @Override
+    public SeleniumWait withTimeout(Duration timeout) {
+        if (timeout != null) {
+            super.withTimeout(timeout);
+            this.timeout = timeout;
+        }
+        return this;
     }
 
     /**

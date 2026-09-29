@@ -1,113 +1,105 @@
 package com.sele3.asserts;
 
-import java.util.Collection;
+import java.util.List;
+
+import org.assertj.core.api.SoftAssertions;
+import org.assertj.core.api.StandardSoftAssertionsProvider;
 
 import com.sele3.elements.BaseElement;
+import com.sele3.reports.ReportRunner;
+import com.sele3.reports.ReportStatus;
 
 /**
- * Entry point for soft assertions: {@code SoftAssert.expect(actual).toEqual(expected)} records a
- * failure instead of throwing, letting the test keep running; call {@link #assertAll()} to fail
- * with every collected failure reported together. For a fail-fast equivalent, see {@link Assert}.
+ * Entry point for soft assertions: {@code softly.assertThat(actual).isEqualTo(expected)} records a
+ * failure (and reports it as a FAIL step) instead of throwing, letting the test keep running.
+ * {@link com.sele3.lifecycle.ITestLifecycle#endTest} calls {@link #assertAll()} after each test, so
+ * tests don't have to. For fail-fast assertions, see {@link Assert}.
  *
- * <p>Delegates to a single shared, thread-safe {@link SoftAssertContainer} — nothing needs to be
- * instantiated to use it. Instantiate {@link SoftAssertContainer} directly only for an independent
- * soft-assert scope.
+ * <pre>{@code
+ * import static com.sele3.asserts.SoftAssert.softly;
+ *
+ * softly.assertThat(title).as("Page title").startsWith("TestArchitect");
+ * softly.assertThat(cartLink).as("Cart link").isVisible();
+ * }</pre>
+ *
+ * <p>{@link #softly} is one shared, stateless instance: every AssertJ soft {@code assertThat} comes
+ * from {@link StandardSoftAssertionsProvider} and collects into the current thread's own
+ * {@link SoftAssertions}, so nothing needs to be instantiated and parallel tests stay isolated.
  */
-public final class SoftAssert {
-    private static final SoftAssertContainer softAssertContainer = new SoftAssertContainer();
+public final class SoftAssert implements StandardSoftAssertionsProvider {
+    public static final SoftAssert softly = new SoftAssert();
+
+    private static final ThreadLocal<SoftAssertions> current = ThreadLocal.withInitial(() -> new SoftAssertions() {
+        @Override
+        public void onAssertionErrorCollected(AssertionError error) {
+            ReportRunner.step(ReportStatus.FAIL, error.getMessage());
+        }
+    });
 
     private SoftAssert() {
     }
 
     /**
-     * Starts a soft assertion on an arbitrary value.
-     *
-     * @param actual the value under assertion
-     * @param description an optional label prefixed to any resulting failure message
-     * @param <T> the type of the value under assertion
-     * @return a matcher for {@code actual}
-     */
-    public static <T> ObjectExpect<T> expect(T actual, String... description) {
-        return softAssertContainer.expect(actual, description);
-    }
-
-    /**
-     * Starts a soft assertion on a {@code boolean}/{@link Boolean} value.
-     *
-     * @param actual the value under assertion
-     * @param description an optional label prefixed to any resulting failure message
-     * @return a matcher for {@code actual}
-     */
-    public static BooleanExpect expect(Boolean actual, String... description) {
-        return softAssertContainer.expect(actual, description);
-    }
-
-    /**
-     * Starts a soft assertion on a {@link String}.
-     *
-     * @param actual the value under assertion
-     * @param description an optional label prefixed to any resulting failure message
-     * @return a matcher for {@code actual}
-     */
-    public static StringExpect expect(String actual, String... description) {
-        return softAssertContainer.expect(actual, description);
-    }
-
-    /**
-     * Starts a soft assertion on a {@link Number} that is also {@link Comparable}.
-     *
-     * @param actual the value under assertion
-     * @param description an optional label prefixed to any resulting failure message
-     * @param <T> the numeric type under assertion
-     * @return a matcher for {@code actual}
-     */
-    public static <T extends Number & Comparable<T>> NumberExpect<T> expect(T actual, String... description) {
-        return softAssertContainer.expect(actual, description);
-    }
-
-    /**
-     * Starts a soft assertion on a {@link Collection}.
-     *
-     * @param actual the value under assertion
-     * @param description an optional label prefixed to any resulting failure message
-     * @param <E> the element type of the collection under assertion
-     * @return a matcher for {@code actual}
-     */
-    public static <E> CollectionExpect<E> expect(Collection<E> actual, String... description) {
-        return softAssertContainer.expect(actual, description);
-    }
-
-    /**
-     * Starts a soft assertion on a {@link BaseElement}. Unlike the other overloads, the returned
-     * matcher polls the element up to the current driver's configured timeout before recording a
-     * failure; see {@link ElementExpect}.
+     * Starts a soft assertion on a {@link BaseElement}. Each check polls the element up to the
+     * current driver's configured timeout before recording a failure; see {@link ElementAssert}.
      *
      * @param actual the element under assertion
-     * @param description an optional label prefixed to any resulting failure message
-     * @return a matcher for {@code actual}
+     * @return assertions for {@code actual}
      */
-    public static ElementExpect expect(BaseElement actual, String... description) {
-        return softAssertContainer.expect(actual, description);
+    public ElementAssert assertThat(BaseElement actual) {
+        return proxy(ElementAssert.class, BaseElement.class, actual);
     }
 
     /**
-     * Records a failure with the given message, regardless of any condition, without stopping the
-     * current test.
+     * Records a failure with the given message without stopping the current test.
      *
      * @param message the failure message
      */
-    public static void fail(String message) {
-        softAssertContainer.fail(message);
+    public void fail(String message) {
+        current.get().fail(message);
     }
 
     /**
-     * Throws a {@link SoftAssertionException} aggregating every failure recorded on the current
-     * thread since the last {@link #assertAll()}, then clears them; does nothing if none are
-     * pending.
+     * Fails with every failure collected on the current thread, then clears them so the next test
+     * starts clean; does nothing if none are pending.
      *
-     * @throws SoftAssertionException if any soft assertion failed on the current thread
+     * @throws AssertionError if any soft assertion failed on the current thread
      */
-    public static void assertAll() {
-        softAssertContainer.assertAll();
+    @Override
+    public void assertAll() {
+        SoftAssertions softAssertions = current.get();
+        current.remove();
+        softAssertions.assertAll();
+    }
+
+    @Override
+    public <SELF extends org.assertj.core.api.Assert<? extends SELF, ? extends ACTUAL>, ACTUAL> SELF proxy(
+            Class<SELF> assertClass, Class<ACTUAL> actualClass, ACTUAL actual) {
+        return current.get().proxy(assertClass, actualClass, actual);
+    }
+
+    @Override
+    public void collectAssertionError(AssertionError error) {
+        current.get().collectAssertionError(error);
+    }
+
+    @Override
+    public List<AssertionError> assertionErrorsCollected() {
+        return current.get().assertionErrorsCollected();
+    }
+
+    @Override
+    public void succeeded() {
+        current.get().succeeded();
+    }
+
+    @Override
+    public boolean wasSuccess() {
+        return current.get().wasSuccess();
+    }
+
+    @Override
+    public void onAssertionErrorCollected(AssertionError error) {
+        current.get().onAssertionErrorCollected(error);
     }
 }

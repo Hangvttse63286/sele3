@@ -14,6 +14,9 @@
         <maven.compiler.release>21</maven.compiler.release>
         <aspectj.version>1.9.22</aspectj.version>
         <allure.version>2.35.5</allure.version>
+        <!-- defaults, overridable from the command line with -DsuiteXmlFile=... / -Dmaven.test.failure.ignore=false -->
+        <suiteXmlFile>src/test/resources/suites/demotests.xml</suiteXmlFile>
+        <maven.test.failure.ignore>true</maven.test.failure.ignore>
     </properties>
 
     <dependencies>
@@ -36,6 +39,11 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>7.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.27.7</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -68,10 +76,14 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <testFailureIgnore>true</testFailureIgnore>
                     <argLine>
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                     </argLine>

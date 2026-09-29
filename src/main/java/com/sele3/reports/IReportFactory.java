@@ -46,8 +46,8 @@ public interface IReportFactory {
 
     /**
      * Runs {@code body} as a named step against the current test, recording it as
-     * {@link ReportStatus#PASS} if it returns normally or a failure status if it throws (a
-     * screenshot is attached either way), then rethrows so a failing step still fails the test.
+     * {@link ReportStatus#PASS} if it returns normally or a failure status with a screenshot if it
+     * throws, then rethrows so a failing step still fails the test.
      *
      * @param stepName a short description of the step performed
      * @param body the code to run as this step

@@ -1,42 +1,41 @@
 package listeners;
 
+import org.testng.IInvokedMethod;
+import org.testng.IInvokedMethodListener;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.testng.SkipException;
 
-import com.sele3.reports.ReportRunner;
-import com.sele3.reports.ReportStatus;
-
-import lombok.extern.slf4j.Slf4j;
+import com.sele3.lifecycle.ITestLifecycle;
 
 /**
- * TestNG listener that wires {@link ReportRunner}'s test lifecycle to TestNG's own: starts a
- * report entry when a test method begins, ends it with the matching {@link ReportStatus} when it
- * finishes, and — on failure — logs the exception.
+ * TestNG adapter for {@link ITestLifecycle}. Starts the report entry when a test starts; ends it
+ * right after the test method runs (while TestNG still lets the result change), failing the test on
+ * any pending soft-assertion failures; and ends skipped tests as SKIP, including those TestNG skips
+ * without running (a failed dependency or setup method).
  */
-@Slf4j
-public class TestListener implements ITestListener {
+public class TestListener implements ITestListener, IInvokedMethodListener, ITestLifecycle {
 
     @Override
     public void onTestStart(ITestResult result) {
-        ReportRunner.startTest(result.getMethod().getMethodName(), result.getMethod().getDescription());
+        startTest(result.getMethod().getMethodName(), result.getMethod().getDescription());
     }
 
     @Override
-    public void onTestSuccess(ITestResult result) {
-        ReportRunner.endTest(ReportStatus.PASS);
-    }
-
-    @Override
-    public void onTestFailure(ITestResult result) {
-        Throwable throwable = result.getThrowable();
-        if (throwable != null) {
-            ReportRunner.logException(throwable);
+    public void afterInvocation(IInvokedMethod method, ITestResult result) {
+        // Skips (SkipException, or a failed dependency/setup method) are ended in onTestSkipped.
+        if (!method.isTestMethod() || result.getStatus() == ITestResult.SKIP || result.getThrowable() instanceof SkipException) {
+            return;
         }
-        ReportRunner.endTest(ReportStatus.FAIL);
+        Throwable error = endTest(result.getThrowable());
+        if (error != null) {
+            result.setThrowable(error);
+            result.setStatus(ITestResult.FAILURE);
+        }
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
-        ReportRunner.endTest(ReportStatus.SKIP);
+        skipTest(result.getThrowable());
     }
 }

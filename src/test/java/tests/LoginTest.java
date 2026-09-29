@@ -24,13 +24,13 @@ public class LoginTest extends TestBase {
     @Test(description = "Logging in with an unregistered username shows a WooCommerce error notice")
     public void loginWithUnknownUsernameFails() {
         ReportRunner.step("Open the My Account page", () -> accountLink.click());
-        Assert.expect(DriverRunner.getCurrentUrl(), "Current URL is the My Account page").toContain("/my-account/");
+        Assert.assertThat(DriverRunner.getCurrentUrl()).as("Current URL is the My Account page").contains("/my-account/");
 
         ReportRunner.step("Enter username", () -> username.clearAndEnter("nonexistent_user_12345"));
         ReportRunner.step("Enter password", () -> password.clearAndEnter("wrongpass"));
         ReportRunner.step("Click login button", () -> loginButton.click());
 
-        Assert.expect(errorNotice, "WooCommerce error notice is visible").toBeVisible();
-        Assert.expect(errorNotice, "Error notice shows the unregistered-username message").toContainText("is not registered on this site");
+        Assert.assertThat(errorNotice).as("WooCommerce error notice is visible").isVisible();
+        Assert.assertThat(errorNotice).as("Error notice shows the unregistered-username message").containsText("is not registered on this site");
     }
 }
