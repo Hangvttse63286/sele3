@@ -1,19 +1,18 @@
 package tests;
 
-import static com.sele3.asserts.SoftAssert.softly;
-
 import java.util.List;
 
 import org.openqa.selenium.By;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import static com.sele3.asserts.SoftAssert.softly;
 import com.sele3.drivers.DriverRunner;
 import com.sele3.elements.BaseElement;
 import com.sele3.elements.Element;
 
 import base.TestBase;
-import listeners.TestListener;
+import listeners.TestNgListener;
 
 /**
  * Exercises SoftAssert across String, Object, Boolean, Number, Collection and Element assertions in
@@ -21,7 +20,7 @@ import listeners.TestListener;
  * automatic assertAll() reports them all together after the test, instead of stopping at
  * the first failure the way Assert would.
  */
-@Listeners(TestListener.class)
+@Listeners(TestNgListener.class)
 public class HomePageTest extends TestBase {
     private final BaseElement cartLink = new Element(By.cssSelector("a[href*='/cart/']"));
     private final BaseElement contactLink = new Element(By.cssSelector("a[href*='/contact/']"));

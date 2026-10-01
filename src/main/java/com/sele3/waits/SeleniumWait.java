@@ -10,7 +10,6 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.sele3.drivers.DriverRunner;
 import com.sele3.elements.BaseElement;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -23,12 +22,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class SeleniumWait extends WebDriverWait{
-
-    /**
-     * The maximum time this wait waits. Kept here because {@code FluentWait} stores it privately.
-     */
-    @Getter
-    private Duration timeout;
 
     /**
      * Creates a {@link SeleniumWait} with no bound {@link BaseElement}, using the current
@@ -49,7 +42,10 @@ public class SeleniumWait extends WebDriverWait{
      */
     public SeleniumWait(Duration timeout, Duration pollingInterval) {
         super(DriverRunner.getWebDriver(), timeout, pollingInterval);
-        this.timeout = timeout;
+    }
+
+    public Duration getTimeout() {
+        return super.timeout;
     }
 
     /**
@@ -62,7 +58,6 @@ public class SeleniumWait extends WebDriverWait{
     public SeleniumWait withTimeout(Duration timeout) {
         if (timeout != null) {
             super.withTimeout(timeout);
-            this.timeout = timeout;
         }
         return this;
     }

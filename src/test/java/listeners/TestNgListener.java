@@ -14,7 +14,7 @@ import com.sele3.lifecycle.ITestLifecycle;
  * any pending soft-assertion failures; and ends skipped tests as SKIP, including those TestNG skips
  * without running (a failed dependency or setup method).
  */
-public class TestListener implements ITestListener, IInvokedMethodListener, ITestLifecycle {
+public class TestNgListener implements ITestListener, IInvokedMethodListener, ITestLifecycle {
 
     @Override
     public void onTestStart(ITestResult result) {

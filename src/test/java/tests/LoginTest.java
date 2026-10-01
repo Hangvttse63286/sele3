@@ -11,9 +11,9 @@ import com.sele3.elements.Element;
 import com.sele3.reports.ReportRunner;
 
 import base.TestBase;
-import listeners.TestListener;
+import listeners.TestNgListener;
 
-@Listeners(TestListener.class)
+@Listeners(TestNgListener.class)
 public class LoginTest extends TestBase {
     private final BaseElement accountLink = new Element(By.cssSelector("a[href*='/my-account/']"));
     private final BaseElement username = new Element(By.id("username"));

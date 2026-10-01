@@ -10,9 +10,9 @@ import com.sele3.elements.Element;
 import com.sele3.reports.ReportRunner;
 
 import base.TestBase;
-import listeners.TestListener;
+import listeners.TestNgListener;
 
-@Listeners(TestListener.class)
+@Listeners(TestNgListener.class)
 public class CartTest extends TestBase {
     private final BaseElement cartLink = new Element(By.cssSelector("a[href*='/cart/']"));
     private final BaseElement emptyCartHeading = new Element(By.cssSelector(".cart-empty h1"));
