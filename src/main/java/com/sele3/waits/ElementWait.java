@@ -1,6 +1,7 @@
 package com.sele3.waits;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 
 import org.openqa.selenium.By;
@@ -45,6 +46,19 @@ public class ElementWait extends SeleniumWait {
     public ElementWait(BaseElement element, Duration timeout, Duration pollingInterval) {
         super(timeout, pollingInterval);
         this.element = element;
+    }
+
+    /**
+     * Sets the maximum time to wait, returning this {@link ElementWait} so element waits can be
+     * chained, e.g. {@code element.waits().withTimeout(Duration.ofSeconds(5)).untilVisible()}.
+     *
+     * @param timeout the maximum time to wait; {@code null} keeps the current timeout
+     * @return this wait
+     */
+    @Override
+    public ElementWait withTimeout(Duration timeout) {
+        super.withTimeout(timeout);
+        return this;
     }
 
     /**
@@ -99,12 +113,22 @@ public class ElementWait extends SeleniumWait {
     }
 
     /**
-     * Waits until every element matching the locator is invisible (or no element matches at
-     * all).
+     * Waits until at least one element matching the locator is present in the DOM and none of
+     * them is displayed.
      */
     public void untilInvisible() {
         ignoreAll(RetryableExceptions.COMMON_EXCEPTIONS)
-            .until(driver -> driver.findElements(getBy()).stream().noneMatch(WebElement::isDisplayed));
+            .until(driver -> {
+                List<WebElement> elements = driver.findElements(getBy());
+                return !elements.isEmpty() && elements.stream().noneMatch(WebElement::isDisplayed);
+            });
+    }
+
+    /**
+     * Waits until no element matching the locator is present in the DOM.
+     */
+    public void untilNotExist() {
+        until(driver -> driver.findElements(getBy()).isEmpty());
     }
 
     /**

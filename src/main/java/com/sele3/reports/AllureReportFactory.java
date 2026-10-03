@@ -4,9 +4,16 @@ import java.io.ByteArrayInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Base64;
+import java.util.UUID;
+
+import org.openqa.selenium.OutputType;
+
+import com.sele3.drivers.DriverRunner;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Status;
+import io.qameta.allure.model.StepResult;
+import io.qameta.allure.util.ResultsUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -30,6 +37,15 @@ public class AllureReportFactory implements IReportFactory {
         log.debug("Allure test lifecycle is managed by the listener; final status={}", status);
     }
 
+    /**
+     * Doesn't log {@code error}: the Allure listener already records it (a failure's message and
+     * stack trace, or the skip reason) on the test result, so logging it here would show it twice.
+     */
+    @Override
+    public void endTest(IReportStatus status, Throwable error) {
+        endTest(status);
+    }
+
     @Override
     public void log(IReportStatus status, String message) {
         Allure.step(message, toAllureStatus(status));
@@ -37,17 +53,50 @@ public class AllureReportFactory implements IReportFactory {
 
     @Override
     public void step(IReportStatus status, String stepName) {
-        Allure.step(stepName, toAllureStatus(status));
+        // Not Allure.step(name, status): a screenshot needs to attach to the step while it's
+        // still open, so the step is driven manually instead of via that closed one-liner.
+        String uuid = UUID.randomUUID().toString();
+        Allure.getLifecycle().startStep(uuid, new StepResult().setName(stepName).setStatus(toAllureStatus(status)));
+        if (status.isFailureStatus()) {
+            try {
+                attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            } catch (RuntimeException e) {
+                // e.g. no driver, or the browser crashed: don't let it break the step being reported
+                log.warn("Could not take screenshot: {}", e.getMessage());
+            }
+        }
+        Allure.getLifecycle().stopStep(uuid);
     }
 
     @Override
     public void step(String stepName, Runnable body) {
-        Allure.step(stepName, body::run);
+        // Not Allure.step(name, body::run): we need the exception in hand, before the step
+        // closes, to attach a screenshot to it.
+        String uuid = UUID.randomUUID().toString();
+        Allure.getLifecycle().startStep(uuid, new StepResult().setName(stepName));
+        try {
+            body.run();
+            Allure.getLifecycle().updateStep(uuid, step -> step.setStatus(Status.PASSED));
+        } catch (Throwable t) {
+            Status status = ResultsUtils.getStatus(t).orElse(Status.BROKEN);
+            Allure.getLifecycle().updateStep(uuid, step -> step
+                    .setStatus(status)
+                    .setStatusDetails(ResultsUtils.getStatusDetails(t).orElse(null)));
+            try {
+                attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            } catch (RuntimeException e) {
+                // e.g. no driver, or the browser crashed: rethrow the step's own error, not this one
+                log.warn("Could not take screenshot: {}", e.getMessage());
+            }
+            throw t;
+        } finally {
+            Allure.getLifecycle().stopStep(uuid);
+        }
     }
 
     @Override
     public void logException(Throwable throwable) {
-        Allure.step(throwable.getMessage() != null ? throwable.getMessage() : throwable.toString(), Status.FAILED);
+        Allure.step(throwable.getMessage() != null ? throwable.getMessage().strip() : throwable.toString(), Status.FAILED);
         Allure.addAttachment("Exception", "text/plain", stackTraceToString(throwable), ".txt");
     }
 

@@ -6,11 +6,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ServiceLoader;
 
+import org.openqa.selenium.OutputType;
+
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 import com.aventstack.extentreports.markuputils.MarkupHelper;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+import com.sele3.drivers.DriverRunner;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,7 +60,16 @@ public class ExtentReportFactory implements IReportFactory {
 
     @Override
     public void step(IReportStatus status, String stepName) {
-        requireCurrentTest().createNode(stepName).log(toExtentStatus(status), stepName);
+        ExtentTest node = requireCurrentTest().createNode(stepName);
+        node.log(toExtentStatus(status), stepName);
+        if (status.isFailureStatus()) {
+            try {
+                node.addScreenCaptureFromBase64String(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            } catch (RuntimeException e) {
+                // e.g. no driver, or the browser crashed: don't let it break the step being reported
+                log.warn("Could not take screenshot: {}", e.getMessage());
+            }
+        }
     }
 
     @Override
@@ -68,6 +80,12 @@ public class ExtentReportFactory implements IReportFactory {
             node.pass(stepName);
         } catch (Throwable t) {
             node.fail(stepName + " failed with exception: " + t.getMessage());
+            try {
+                node.addScreenCaptureFromBase64String(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            } catch (RuntimeException e) {
+                // e.g. no driver, or the browser crashed: rethrow the step's own error, not this one
+                log.warn("Could not take screenshot: {}", e.getMessage());
+            }
             throw t;
         }
     }

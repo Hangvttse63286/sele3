@@ -1,5 +1,6 @@
 package com.sele3.elements;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.openqa.selenium.By;

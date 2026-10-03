@@ -7,4 +7,10 @@ public enum ReportStatus implements IReportStatus {
     INFO,
     WARNING,
     BROKEN,
+    ;
+
+    @Override
+    public boolean isFailureStatus() {
+        return this == FAIL || this == WARNING || this == BROKEN;
+    }
 }
