@@ -8,10 +8,10 @@ import com.sele3.asserts.Assert;
 import com.sele3.drivers.DriverRunner;
 import com.sele3.elements.BaseElement;
 import com.sele3.elements.Element;
+import com.sele3.listeners.TestNgListener;
 import com.sele3.reports.ReportRunner;
 
 import base.TestBase;
-import listeners.TestNgListener;
 
 @Listeners(TestNgListener.class)
 public class LoginTest extends TestBase {

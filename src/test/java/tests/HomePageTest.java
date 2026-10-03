@@ -10,9 +10,9 @@ import static com.sele3.asserts.SoftAssert.softly;
 import com.sele3.drivers.DriverRunner;
 import com.sele3.elements.BaseElement;
 import com.sele3.elements.Element;
+import com.sele3.listeners.TestNgListener;
 
 import base.TestBase;
-import listeners.TestNgListener;
 
 /**
  * Exercises SoftAssert across String, Object, Boolean, Number, Collection and Element assertions in

@@ -10,6 +10,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.sele3.drivers.DriverRunner;
 import com.sele3.elements.BaseElement;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -22,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class SeleniumWait extends WebDriverWait{
+    @Getter 
+    private RuntimeException expiry;
 
     /**
      * Creates a {@link SeleniumWait} with no bound {@link BaseElement}, using the current
@@ -60,6 +63,21 @@ public class SeleniumWait extends WebDriverWait{
             super.withTimeout(timeout);
         }
         return this;
+    }
+
+    /**
+     * Records Selenium's usual timeout exception (with driver details) as this wait's
+     * {@link #getExpiry() expiry}. {@link WebDriverWait#timeoutException} throws it rather than
+     * returning it, so it is captured on the way out.
+     */
+    @Override
+    protected RuntimeException timeoutException(String message, Throwable lastException) {
+        try {
+            expiry = super.timeoutException(message, lastException);
+        } catch (RuntimeException e) {
+            expiry = e;
+        }
+        return expiry;
     }
 
     /**

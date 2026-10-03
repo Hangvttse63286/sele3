@@ -213,7 +213,10 @@ public class ElementAssert extends AbstractAssert<ElementAssert, BaseElement> {
 
     /**
      * Runs {@code waitAction} (an {@link ElementWait} {@code until*} call) on a fresh wait and
-     * fails if it times out; a {@code null} element fails immediately.
+     * fails if that wait expires, keeping the condition's last exception as the cause; a
+     * {@code null} element fails immediately. Anything else, including a
+     * {@link org.openqa.selenium.TimeoutException} from a command inside the condition, propagates
+     * unchanged, so a soft assertion can't turn it into a collected mismatch.
      */
     private ElementAssert check(Consumer<ElementWait> waitAction, String expectation) {
         isNotNull();
@@ -221,7 +224,14 @@ public class ElementAssert extends AbstractAssert<ElementAssert, BaseElement> {
         try {
             waitAction.accept(wait);
         } catch (TimeoutException e) {
-            failWithMessage("Expecting %s (waited up to %d ms)", expectation, wait.getTimeout().toMillis());
+            if (e != wait.getExpiry()) {
+                throw e;
+            }
+            AssertionError failure = failure("Expecting %s (waited up to %d ms)", expectation, wait.getTimeout().toMillis());
+            if (e.getCause() != null) {
+                failure.initCause(e.getCause());
+            }
+            throw failure;
         }
         return myself;
     }
