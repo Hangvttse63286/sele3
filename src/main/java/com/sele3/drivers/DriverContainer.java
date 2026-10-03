@@ -48,9 +48,9 @@ public class DriverContainer {
 
     /**
      * Quits the current thread's underlying WebDriver, if one was created, and removes the
-     * thread-local binding regardless of whether quitting succeeds.
-     *
-     * @throws RuntimeException if an error occurs while quitting the driver
+     * thread-local binding regardless of whether quitting succeeds. A failure to quit (e.g. the
+     * browser already crashed) is logged rather than thrown, so cleanup can't add a failure on top
+     * of the test's own.
      */
     public void quit() {
         try {
@@ -60,7 +60,7 @@ public class DriverContainer {
                 driver.getDriver().quit();
             }
         } catch (WebDriverException e) {
-            throw new RuntimeException("Error occurs when trying to quit driver", e);
+            log.warn("Could not quit driver cleanly: {}", e.getMessage());
         } finally {
             threadDriver.remove();
         }

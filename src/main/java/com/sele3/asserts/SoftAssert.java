@@ -9,6 +9,8 @@ import com.sele3.elements.BaseElement;
 import com.sele3.reports.ReportRunner;
 import com.sele3.reports.ReportStatus;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Entry point for soft assertions: {@code softly.assertThat(actual).isEqualTo(expected)} records a
  * failure (and reports it as a FAIL step) instead of throwing, letting the test keep running.
@@ -26,13 +28,19 @@ import com.sele3.reports.ReportStatus;
  * from {@link StandardSoftAssertionsProvider} and collects into the current thread's own
  * {@link SoftAssertions}, so nothing needs to be instantiated and parallel tests stay isolated.
  */
+@Slf4j
 public final class SoftAssert implements StandardSoftAssertionsProvider {
     public static final SoftAssert softly = new SoftAssert();
 
     private static final ThreadLocal<SoftAssertions> current = ThreadLocal.withInitial(() -> new SoftAssertions() {
         @Override
         public void onAssertionErrorCollected(AssertionError error) {
-            ReportRunner.step(ReportStatus.FAIL, error.getMessage());
+            // The failure is already collected; a reporter error must not escape the soft assertion.
+            try {
+                ReportRunner.step(ReportStatus.FAIL, error.getMessage());
+            } catch (RuntimeException reportError) {
+                log.warn("Could not report soft assertion failure", reportError);
+            }
         }
     });
 

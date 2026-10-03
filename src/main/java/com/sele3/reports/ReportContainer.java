@@ -89,12 +89,18 @@ public class ReportContainer {
      * {@link #initialize}, e.g. from {@link ReportRunner#endTest} — which is also why flushing
      * happens here per-test rather than once at the end of a suite: each test's own worker thread
      * flushes its own factory, so no cross-thread access to another thread's binding is needed.
+     * A flush failure is logged rather than thrown, and the binding is removed either way.
      */
     public void clear() {
         IReportFactory factory = getReportFactory();
-        if (factory != null) {
-            factory.flush();
+        try {
+            if (factory != null) {
+                factory.flush();
+            }
+        } catch (RuntimeException e) {
+            log.error("Could not flush the report", e);
+        } finally {
+            threadReportFactory.remove();
         }
-        threadReportFactory.remove();
     }
 }

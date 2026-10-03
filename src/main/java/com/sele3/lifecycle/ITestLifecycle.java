@@ -1,6 +1,9 @@
 package com.sele3.lifecycle;
 
+import org.slf4j.LoggerFactory;
+
 import com.sele3.asserts.SoftAssert;
+import com.sele3.reports.IReportStatus;
 import com.sele3.reports.ReportRunner;
 import com.sele3.reports.ReportStatus;
 
@@ -22,7 +25,12 @@ public interface ITestLifecycle {
      * @param description the test description, or {@code null}
      */
     default void startTest(String name, String description) {
-        ReportRunner.startTest(name, description);
+        try {
+            ReportRunner.startTest(name, description);
+        } catch (RuntimeException | LinkageError reportError) {
+            // LinkageError: e.g. a reporter class whose static setup failed (ExceptionInInitializerError).
+            LoggerFactory.getLogger(ITestLifecycle.class).error("Could not start the report entry; running the test without it", reportError);
+        }
     }
 
     /**
@@ -44,7 +52,7 @@ public interface ITestLifecycle {
                 error.addSuppressed(softFailures);
             }
         }
-        ReportRunner.endTest(error == null ? ReportStatus.PASS : ReportStatus.FAIL, error);
+        endReport(error == null ? ReportStatus.PASS : ReportStatus.FAIL, error);
         return error;
     }
 
@@ -60,6 +68,18 @@ public interface ITestLifecycle {
         } catch (AssertionError ignored) {
             // Already reported as FAIL steps when collected; a skipped test doesn't fail on them.
         }
-        ReportRunner.endTest(ReportStatus.SKIP, reason);
+        endReport(ReportStatus.SKIP, reason);
+    }
+
+    /**
+     * Ends the report entry, logging instead of throwing if the reporter fails, so a reporting
+     * problem can't replace the test's own result.
+     */
+    private void endReport(IReportStatus status, Throwable error) {
+        try {
+            ReportRunner.endTest(status, error);
+        } catch (RuntimeException reportError) {
+            LoggerFactory.getLogger(ITestLifecycle.class).error("Could not end the report entry", reportError);
+        }
     }
 }

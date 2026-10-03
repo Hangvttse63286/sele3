@@ -63,7 +63,12 @@ public class ExtentReportFactory implements IReportFactory {
         ExtentTest node = requireCurrentTest().createNode(stepName);
         node.log(toExtentStatus(status), stepName);
         if (status.isFailureStatus()) {
-            node.addScreenCaptureFromBase64String(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            try {
+                node.addScreenCaptureFromBase64String(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            } catch (RuntimeException e) {
+                // e.g. no driver, or the browser crashed: don't let it break the step being reported
+                log.warn("Could not take screenshot: {}", e.getMessage());
+            }
         }
     }
 
@@ -75,7 +80,12 @@ public class ExtentReportFactory implements IReportFactory {
             node.pass(stepName);
         } catch (Throwable t) {
             node.fail(stepName + " failed with exception: " + t.getMessage());
-            node.addScreenCaptureFromBase64String(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            try {
+                node.addScreenCaptureFromBase64String(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            } catch (RuntimeException e) {
+                // e.g. no driver, or the browser crashed: rethrow the step's own error, not this one
+                log.warn("Could not take screenshot: {}", e.getMessage());
+            }
             throw t;
         }
     }

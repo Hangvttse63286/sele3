@@ -58,7 +58,12 @@ public class AllureReportFactory implements IReportFactory {
         String uuid = UUID.randomUUID().toString();
         Allure.getLifecycle().startStep(uuid, new StepResult().setName(stepName).setStatus(toAllureStatus(status)));
         if (status.isFailureStatus()) {
-            attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            try {
+                attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            } catch (RuntimeException e) {
+                // e.g. no driver, or the browser crashed: don't let it break the step being reported
+                log.warn("Could not take screenshot: {}", e.getMessage());
+            }
         }
         Allure.getLifecycle().stopStep(uuid);
     }
@@ -77,7 +82,12 @@ public class AllureReportFactory implements IReportFactory {
             Allure.getLifecycle().updateStep(uuid, step -> step
                     .setStatus(status)
                     .setStatusDetails(ResultsUtils.getStatusDetails(t).orElse(null)));
-            attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            try {
+                attachScreenshot(DriverRunner.takeScreenShot(OutputType.BASE64), "Screenshot on failure");
+            } catch (RuntimeException e) {
+                // e.g. no driver, or the browser crashed: rethrow the step's own error, not this one
+                log.warn("Could not take screenshot: {}", e.getMessage());
+            }
             throw t;
         } finally {
             Allure.getLifecycle().stopStep(uuid);

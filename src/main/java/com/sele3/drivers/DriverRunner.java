@@ -157,15 +157,14 @@ public class DriverRunner {
      * @return {@code true} if the driver responds to a basic command, {@code false} otherwise
      */
     public static boolean isDriverAlive() {
-        if (getWebDriver() == null) {
+        if (!driverContainer.hasDriver()) {
             return false;
-        } else {
-            try {
-                getWebDriver().getCurrentUrl();
-                return true;
-            } catch (WebDriverException e) {
-                return false;
-            }
+        }
+        try {
+            getWebDriver().getCurrentUrl();
+            return true;
+        } catch (WebDriverException e) {
+            return false;
         }
     }
 

@@ -31,7 +31,14 @@ public class ReportRunner {
             return;
         }
         log.info("Starting test: reportType={}, name={}, description={}", reportType, name, description);
-        getReportFactory().orElseThrow().startTest(name, description);
+        try {
+            getReportFactory().orElseThrow().startTest(name, description);
+        } catch (RuntimeException | Error e) {
+            // Unbind the half-started reporter, so this test's steps run unreported instead of
+            // failing on it ("No Extent test has been started").
+            reportContainer.clear();
+            throw e;
+        }
     }
 
     /**
@@ -71,8 +78,12 @@ public class ReportRunner {
         } else if (error != null) {
             log.error("[EXCEPTION]: {}", error.getMessage(), error);
         }
-        ifReporting(factory -> factory.endTest(status, error));
-        reportContainer.clear();
+        try {
+            ifReporting(factory -> factory.endTest(status, error));
+        } finally {
+            // Even if the reporter fails, don't leave its binding to leak into the next test on this thread.
+            reportContainer.clear();
+        }
     }
 
     /**
