@@ -31,7 +31,14 @@ public class ReportRunner {
             return;
         }
         log.info("Starting test: reportType={}, name={}, description={}", reportType, name, description);
-        getReportFactory().orElseThrow().startTest(name, description);
+        try {
+            getReportFactory().orElseThrow().startTest(name, description);
+        } catch (RuntimeException | Error e) {
+            // Unbind the half-started reporter, so this test's steps run unreported instead of
+            // failing on it ("No Extent test has been started").
+            reportContainer.clear();
+            throw e;
+        }
     }
 
     /**
@@ -53,9 +60,30 @@ public class ReportRunner {
      * @param status the test's final status
      */
     public static void endTest(IReportStatus status) {
+        endTest(status, null);
+    }
+
+    /**
+     * Finalizes the current thread's test entry (if reporting is enabled), recording why it
+     * failed or was skipped, and clears its report factory binding.
+     *
+     * @param status the test's final status
+     * @param error the error that failed the test or the reason it was skipped, or {@code null}
+     * @see IReportFactory#endTest(IReportStatus, Throwable)
+     */
+    public static void endTest(IReportStatus status, Throwable error) {
         log.info("Ending test: status={}", status);
-        ifReporting(factory -> factory.endTest(status));
-        reportContainer.clear();
+        if (error != null && status == ReportStatus.SKIP) {
+            log.info("[SKIP]: {}", error.getMessage());
+        } else if (error != null) {
+            log.error("[EXCEPTION]: {}", error.getMessage(), error);
+        }
+        try {
+            ifReporting(factory -> factory.endTest(status, error));
+        } finally {
+            // Even if the reporter fails, don't leave its binding to leak into the next test on this thread.
+            reportContainer.clear();
+        }
     }
 
     /**

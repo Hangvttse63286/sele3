@@ -37,6 +37,8 @@ build/
 ### Reports ###
 allure-results
 allure-report
+# allure-maven's local Allure/Node install and report history
+.allure
 
 mvnw
 mvnw.cmd
