@@ -53,7 +53,8 @@ public class FirefoxDriverFactory implements IDriverFactory<FirefoxOptions> {
         options.setPageLoadStrategy(PageLoadStrategy.fromString(config.getPageLoadStrategy()));
 
         if (config.getCapabilities() != null) {
-            options.merge(config.getCapabilities());
+            // merge() returns a new options object rather than updating this one.
+            options = options.merge(config.getCapabilities());
         }
 
         return options;
