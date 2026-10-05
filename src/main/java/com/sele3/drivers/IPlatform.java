@@ -1,5 +1,6 @@
 package com.sele3.drivers;
 
+import java.util.Locale;
 import java.util.ServiceLoader;
 
 public interface IPlatform {
@@ -12,6 +13,17 @@ public interface IPlatform {
      * @return this platform's name
      */
     String name();
+
+    /**
+     * The config file loaded for this platform by {@link com.sele3.configs.ConfigLoader} when no
+     * explicit config file is specified: this platform's lower-case {@link #name()} plus
+     * {@code .json} (e.g. {@code chrome.json}). Override it to use a different file name.
+     *
+     * @return the default config file name for this platform
+     */
+    default String getDefaultConfigFile() {
+        return name().toLowerCase(Locale.ROOT) + ".json";
+    }
 
     /**
      * Resolves an {@link IPlatform} by name, discovering candidates the same way
