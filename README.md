@@ -78,6 +78,7 @@ manual screenshots and report calls. This framework moves all of that into reusa
 ```
 sele3
 ├── .github/workflows/ui-tests.yml        # CI pipeline (GitHub Actions)
+├── CLASSDIAGRAMS.md                      # class diagrams of the framework
 ├── pom.xml                               # dependencies, surefire, plugins
 ├── src/main/java/com/sele3               # ── the framework ──
 │   ├── adapters/      Gson adapters for Duration, Capabilities, IPlatform
@@ -95,6 +96,8 @@ sele3
     ├── configs/                          # run configuration per browser: chrome.json, edge.json, firefox.json
     └── META-INF/services/                # ServiceLoader registrations (browsers, reporters)
 ```
+
+For the classes in each package and how they relate, see the [class diagrams](CLASSDIAGRAMS.md).
 
 ---
 
