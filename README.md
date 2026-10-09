@@ -14,7 +14,7 @@ so test code can stay short and readable, and so tests run reliably in parallel,
 - [Project structure](#project-structure)
 - [How it works](#how-it-works)
 - [Getting started](#getting-started)
-- [Use in another project](#use-in-another-project)
+- [Installation and setup](#installation-and-setup)
 - [Configuration](#configuration)
 - [Writing tests](#writing-tests)
 - [Reports](#reports)
@@ -151,7 +151,7 @@ mvn clean test -DsuiteXmlFile=path/to/suite.xml -DreportType=extent -Dplatform=f
 
 ---
 
-## Use in another project
+## Installation and setup
 
 The framework is a regular Maven library. Your test project adds it as a dependency and keeps its own
 tests, page objects, suites and (optionally) config files.
