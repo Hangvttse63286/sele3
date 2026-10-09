@@ -14,6 +14,7 @@ so test code can stay short and readable, and so tests run reliably in parallel,
 - [Project structure](#project-structure)
 - [How it works](#how-it-works)
 - [Getting started](#getting-started)
+- [Use in another project](#use-in-another-project)
 - [Configuration](#configuration)
 - [Writing tests](#writing-tests)
 - [Reports](#reports)
@@ -147,6 +148,138 @@ mvn clean test -DsuiteXmlFile=path/to/suite.xml -DreportType=extent -Dplatform=f
 
 > Locally, test failures **don't** fail the Maven build (`maven.test.failure.ignore=true` in the POM) so
 > the reports are always produced. CI overrides it with `-Dmaven.test.failure.ignore=false`.
+
+---
+
+## Use in another project
+
+The framework is a regular Maven library. Your test project adds it as a dependency and keeps its own
+tests, page objects, suites and (optionally) config files.
+
+### 1. Install the framework
+
+The framework isn't published to a Maven repository yet, so install it into your local Maven
+repository (`~/.m2`):
+
+```bash
+git clone https://github.com/Hangvttse63286/sele3.git
+cd sele3
+mvn clean install -DskipTests
+```
+
+Repeat this after pulling framework changes. On a CI machine, run the same steps before building your
+test project.
+
+### 2. Add the dependency
+
+In your test project's `pom.xml` (Java 21 is required):
+
+```xml
+<properties>
+    <maven.compiler.release>21</maven.compiler.release>
+</properties>
+
+<dependencies>
+    <dependency>
+        <groupId>com</groupId>
+        <artifactId>sele3</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+</dependencies>
+```
+
+This brings in Selenium, TestNG, AssertJ, Allure, Extent and Gson; don't declare other versions of
+them unless you need to.
+
+### 3. Configure the build
+
+Maven plugins aren't inherited from a dependency, so configure Surefire (and Allure, if you use it)
+in your own `pom.xml`:
+
+```xml
+<properties>
+    <suiteXmlFile>src/test/resources/suites/regression.xml</suiteXmlFile>
+</properties>
+
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>3.2.5</version>
+            <configuration>
+                <suiteXmlFiles>
+                    <suiteXmlFile>${suiteXmlFile}</suiteXmlFile>
+                </suiteXmlFiles>
+                <systemPropertyVariables>
+                    <!-- where Allure writes raw results -->
+                    <allure.results.directory>${project.build.directory}/reports/allure-reports</allure.results.directory>
+                </systemPropertyVariables>
+            </configuration>
+        </plugin>
+
+        <!-- optional: mvn allure:report -> target/reports/allure-html/index.html -->
+        <plugin>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-maven</artifactId>
+            <version>3.0.3</version>
+            <configuration>
+                <resultsDirectory>reports/allure-reports</resultsDirectory>
+                <reportDirectory>${project.build.directory}/reports/allure-html</reportDirectory>
+                <singleFile>true</singleFile>
+                <reportVersion>3.19.1</reportVersion>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+### 4. Provide configuration (optional)
+
+The framework ships default configs (`chrome.json`, `edge.json`, `firefox.json`), so a project works
+without any. To use your own `baseUrl`, timeouts, capabilities, …, add a file with the same name to
+your project:
+
+```
+your-project
+└── src/main/resources/configs/chrome.json     # or src/test/resources/configs/chrome.json
+```
+
+Your file replaces the framework's default of the same name entirely (see [Configuration](#configuration)),
+so copy the framework's file and edit it rather than writing only the fields you change. Files kept
+elsewhere can be loaded with `-DconfigSourcePath=<folder>/`.
+
+### 5. Connect the test lifecycle and write tests
+
+- **TestNG:** attach `com.sele3.listeners.TestNgListener`, preferably once in your suite XML:
+
+  ```xml
+  <suite name="Regression" parallel="classes" thread-count="4">
+      <listeners>
+          <listener class-name="com.sele3.listeners.TestNgListener"/>
+      </listeners>
+      <test name="Regression">
+          <packages>
+              <package name="com.mycompany.tests.*"/>
+          </packages>
+      </test>
+  </suite>
+  ```
+
+- **Another test framework:** implement `ITestLifecycle` (see
+  [Required: connect the test lifecycle](#required-connect-the-test-lifecycle)).
+
+Then open/close the browser around each test class and write tests as described in
+[Writing tests](#writing-tests).
+
+### 6. Run
+
+```bash
+mvn clean test -DreportType=allure -Dplatform=chrome
+mvn allure:report        # if the Allure plugin is configured
+```
+
+All `-D` options from [Configuration](#configuration) work the same way in your project.
 
 ---
 
